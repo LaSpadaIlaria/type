@@ -52,14 +52,40 @@ let currentNodeIndex = 0;
 // Sistema di movimento
 let movementState = 'STOPPED'; // 'STOPPED', 'MOVING_TO_NODE'
 let targetNodeIndex = 0;
-const MOVEMENT_SPEED = 0.015; // Velocità normale fissa
+const MOVEMENT_SPEED = 0.25; // Velocità normale fissa
 
-// Variabili per l'immagine del nodo
-let nodo1Img; // Variabile per la tua immagine
+// Variabili per le immagini dei nodi
+let nodo1Img, nodo8Img, nodo16Img; // Immagini per i nodi 1, 9 e 17
 let showNodo1Image = false;
+let showNodo8Image = false;
+let showNodo16Image = false;
 let nodo1ImageAlpha = 0;
-const NODO1_IMAGE_TARGET_ALPHA = 200;
-const NODO1_IMAGE_FADE_SPEED = 5;
+let nodo8ImageAlpha = 0;
+let nodo16ImageAlpha = 0;
+const NODO_IMAGE_TARGET_ALPHA = 200;
+const NODO_IMAGE_FADE_SPEED = 5;
+
+// Impostazioni per le immagini
+const NODO_IMAGE_SETTINGS = {
+    // Nodo 1 (indice 1)
+    1: {
+        offsetX: -9800, // Spostamento orizzontale (negativo = sinistra)
+        offsetY: -4000,  // Spostamento verticale (negativo = sopra)
+        scale: 8        // Fattore di scala
+    },
+    // Nodo 9 (indice 8)
+    8: {
+        offsetX: -3500, // Spostamento ancora più a sinistra
+        offsetY: 500,  // Spostamento verticale
+        scale: 8        // Fattore di scala
+    },
+    // Nodo 17 (indice 16)
+    16: {
+        offsetX: 1000, // Spostamento orizzontale
+        offsetY: -450,  // Spostamento verticale
+        scale: 8        // Fattore di scala
+    }
+};
 
 // Particelle per effetto stellato (sostituiscono gli sfondi)
 let starParticles = [];
@@ -210,12 +236,26 @@ function startMovingToNextNode() {
         
         movementState = 'MOVING_TO_NODE';
         
-        // Controlla se ci stiamo avvicinando al secondo nodo (indice 1)
+        // Controlla se ci stiamo avvicinando ai nodi con immagini
         if (targetNodeIndex === 1) {
             showNodo1Image = true;
+            showNodo8Image = false;
+            showNodo16Image = false;
+        } else if (targetNodeIndex === 8) {
+            showNodo1Image = false;
+            showNodo8Image = true;
+            showNodo16Image = false;
+        } else if (targetNodeIndex === 16) {
+            showNodo1Image = false;
+            showNodo8Image = false;
+            showNodo16Image = true;
         } else {
             showNodo1Image = false;
+            showNodo8Image = false;
+            showNodo16Image = false;
             nodo1ImageAlpha = 0;
+            nodo8ImageAlpha = 0;
+            nodo16ImageAlpha = 0;
         }
     }
 }
@@ -228,11 +268,19 @@ function updateMovement() {
         // Calcola la distanza dal target
         const distanceToTarget = Math.abs(targetT - scrollProgress);
         
-        // Controllo per l'immagine del secondo nodo
+        // Controllo per le immagini dei nodi
         if (targetNodeIndex === 1 && showNodo1Image) {
             // Quando siamo abbastanza vicini al nodo, inizia la dissolvenza
             if (distanceToTarget < 0.008) {
-                nodo1ImageAlpha = Math.min(nodo1ImageAlpha + NODO1_IMAGE_FADE_SPEED, NODO1_IMAGE_TARGET_ALPHA);
+                nodo1ImageAlpha = Math.min(nodo1ImageAlpha + NODO_IMAGE_FADE_SPEED, NODO_IMAGE_TARGET_ALPHA);
+            }
+        } else if (targetNodeIndex === 8 && showNodo8Image) {
+            if (distanceToTarget < 0.008) {
+                nodo8ImageAlpha = Math.min(nodo8ImageAlpha + NODO_IMAGE_FADE_SPEED, NODO_IMAGE_TARGET_ALPHA);
+            }
+        } else if (targetNodeIndex === 16 && showNodo16Image) {
+            if (distanceToTarget < 0.008) {
+                nodo16ImageAlpha = Math.min(nodo16ImageAlpha + NODO_IMAGE_FADE_SPEED, NODO_IMAGE_TARGET_ALPHA);
             }
         }
         
@@ -246,12 +294,21 @@ function updateMovement() {
             movementState = 'STOPPED';
             document.getElementById('current-node').textContent = (currentNodeIndex + 1);
             
-            // Se siamo arrivati al secondo nodo, mantieni l'immagine visibile
+            // Mantieni l'immagine visibile quando arriviamo al nodo
             if (currentNodeIndex === 1) {
-                nodo1ImageAlpha = NODO1_IMAGE_TARGET_ALPHA;
+                nodo1ImageAlpha = NODO_IMAGE_TARGET_ALPHA;
+            } else if (currentNodeIndex === 8) {
+                nodo8ImageAlpha = NODO_IMAGE_TARGET_ALPHA;
+            } else if (currentNodeIndex === 16) {
+                nodo16ImageAlpha = NODO_IMAGE_TARGET_ALPHA;
             } else {
+                // Nascondi tutte le immagini
                 showNodo1Image = false;
+                showNodo8Image = false;
+                showNodo16Image = false;
                 nodo1ImageAlpha = 0;
+                nodo8ImageAlpha = 0;
+                nodo16ImageAlpha = 0;
             }
         }
     }
@@ -310,10 +367,10 @@ function setupScrollListeners() {
 
 // ============ FUNZIONI P5 ============
 function preload() {
-    // Carica la tua immagine "nodo_1"
-    // Assicurati che il file sia nella stessa cartella o specifica il percorso corretto
-    // Esempi di estensioni accettate: .jpg, .jpeg, .png, .gif
-    nodo1Img = loadImage('assets/nodo_1.png'); // Cambia l'estensione in base al tuo file
+    // Carica le immagini per i nodi
+    nodo1Img = loadImage('assets/nodo_1.png');
+    nodo8Img = loadImage('assets/nodo_8.png');
+    nodo16Img = loadImage('assets/nodo_16.png');
 }
 
 function setup() {
@@ -360,9 +417,17 @@ function draw() {
     scale(zoom);
     translate(-currentPoint.x, -currentPoint.y);
     
-    // DISEGNA PRIMA L'IMMAGINE (COSÌ STA DIETRO AL FILO)
-    if (showNodo1Image && nodo1ImageAlpha > 0) {
-        drawNodo1Image();
+    // DISEGNA PRIMA LE IMMAGINI (COSÌ STANNO DIETRO AL FILO)
+    if (showNodo1Image && nodo1ImageAlpha > 0 && nodo1Img) {
+        drawNodoImage(1, nodo1Img, nodo1ImageAlpha);
+    }
+    
+    if (showNodo8Image && nodo8ImageAlpha > 0 && nodo8Img) {
+        drawNodoImage(8, nodo8Img, nodo8ImageAlpha);
+    }
+    
+    if (showNodo16Image && nodo16ImageAlpha > 0 && nodo16Img) {
+        drawNodoImage(16, nodo16Img, nodo16ImageAlpha);
     }
     
     // Disegna i fili spiraleggianti
@@ -594,35 +659,28 @@ function drawNodes() {
     });
 }
 
-function drawNodo1Image() {
-    // Assicurati che abbiamo il secondo nodo (indice 1) e che l'immagine sia caricata
-    if (nodes.length > 1 && nodo1Img) {
-        const node = nodes[1];
+function drawNodoImage(nodeIndex, img, alpha) {
+    if (nodes.length > nodeIndex && img) {
+        const node = nodes[nodeIndex];
+        const settings = NODO_IMAGE_SETTINGS[nodeIndex];
+        
+        if (!settings) return;
         
         push();
         
-        // POSIZIONE MOLTO PIÙ A SINISTRA - estremo sinistro
-        const imageX = node.x - 9500; // Spostata molto di più a sinistra
-        const imageY = node.y - 2500; // Spostata più in alto
+        // Calcola la posizione usando le impostazioni
+        const imageX = node.x + settings.offsetX;
+        const imageY = node.y + settings.offsetY;
         
-        // MANTIENI LE PROPORZIONI ORIGINALI DELL'IMMAGINE
-        // Usa l'altezza come riferimento e calcola la larghezza proporzionalmente
-        const desiredHeight = 8000; // Altezza molto grande
-        // Calcola la larghezza in base alle proporzioni originali dell'immagine
-        const aspectRatio = nodo1Img.width / nodo1Img.height;
-        const desiredWidth = desiredHeight * aspectRatio;
+        // Calcola dimensioni proporzionali
+        const desiredWidth = img.width * settings.scale;
+        const desiredHeight = img.height * settings.scale;
         
-        // Applica la trasparenza
-        tint(255, nodo1ImageAlpha);
+        // Applica la trasparenza SENZA STROKE/BORDO
+        tint(255, alpha);
         
-        // Disegna la tua immagine "nodo_1" mantenendo le proporzioni
-        image(nodo1Img, imageX, imageY, desiredWidth, desiredHeight);
-        
-        // Per debug: mostra un bordo attorno all'immagine
-        noFill();
-        stroke(255, 255, 255, nodo1ImageAlpha * 0.5);
-        strokeWeight(100);
-        rect(imageX, imageY, desiredWidth, desiredHeight);
+        // Disegna l'immagine senza alcun bordo
+        image(img, imageX, imageY, desiredWidth, desiredHeight);
         
         pop();
     }
@@ -680,6 +738,9 @@ function drawMovingDot(currentPoint) {
         }
     }
 }
+
+console.log("currentNode:", currentNodeIndex, "targetNode:", targetNodeIndex);
+
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
