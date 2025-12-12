@@ -40,7 +40,6 @@ const originalPoints = [
 
 // ============ VARIABILI GLOBALI ============
 let scrollProgress = 0;
-let canvas;
 let pathPoints = [];
 let smoothPath = [];
 let pathLength = 0;
@@ -52,7 +51,7 @@ let currentNodeIndex = 0;
 // Sistema di movimento
 let movementState = 'STOPPED'; // 'STOPPED', 'MOVING_TO_NODE'
 let targetNodeIndex = 0;
-const MOVEMENT_SPEED = 0.25; // Velocità normale fissa
+const MOVEMENT_SPEED = 0.15; // Velocità normale fissa
 
 // Variabili per le immagini dei nodi
 let nodo1Img, nodo8Img, nodo16Img; // Immagini per i nodi 1, 9 e 17
@@ -91,11 +90,22 @@ const NODO_IMAGE_SETTINGS = {
 let starParticles = [];
 const STAR_COUNT = 100;
 
-// ============ VARIABILI P5 ============
-let width, height;
-let p5Instance;
+// --- DESCRIZIONE NODO 2 (PAROLE FUTURISTE) ---
+let showDescriptionNodo2 = false;
+let textLines = [];
+let descriptionAlpha = 0;
+const DESCRIPTION_FADE_SPEED = 8;
 
-// ============ FUNZIONI UTILITY ============
+// Testo del nodo 2
+const nodo2Text = `QuaLCosa si Avvolge… una CURVA che danza… ritmO… raPIdiTà…
+LE grAzie conDuconO alla lettera, la CREAno, la fanno naSCerE:
+Scende la priMa astE. Veloce, sPESSA non guarda DoVe VA… poi…ralLLEnta.
+La barrA divEnta un PuNto di sospEnsiOne che deViA il moviMento vErSo destra,
+un'altra asta … SLASH! 
+Un taglio.  
+E pOI… riNasCita.`;
+
+// ============ FUNZIONI UTILITY MATEMATICHE ============
 function scalePoints(points, multiplier) {
     return points.map(p => ({
         x: p.x * multiplier,
@@ -210,21 +220,6 @@ function calculateNodes() {
     }
 }
 
-// Inizializza le particelle stellato
-function initStarParticles() {
-    starParticles = [];
-    for (let i = 0; i < STAR_COUNT; i++) {
-        starParticles.push({
-            x: Math.random() * width * 100, // Coordinate molto grandi per lo zoom
-            y: Math.random() * height * 100,
-            size: Math.random() * 3 + 1,
-            brightness: Math.random() * 100 + 50,
-            twinkleSpeed: Math.random() * 0.02 + 0.01,
-            twinklePhase: Math.random() * Math.PI * 2
-        });
-    }
-}
-
 // Sistema di movimento tra nodi
 function startMovingToNextNode() {
     if (movementState === 'STOPPED') {
@@ -292,7 +287,9 @@ function updateMovement() {
             scrollProgress = targetT;
             currentNodeIndex = targetNodeIndex;
             movementState = 'STOPPED';
-            document.getElementById('current-node').textContent = (currentNodeIndex + 1);
+            if (document.getElementById('current-node')) {
+                document.getElementById('current-node').textContent = (currentNodeIndex + 1);
+            }
             
             // Mantieni l'immagine visibile quando arriviamo al nodo
             if (currentNodeIndex === 1) {
@@ -314,11 +311,18 @@ function updateMovement() {
     }
 }
 
-function setupScrollListeners() {
-    let lastScrollTime = 0;
+// Calcola distanza tra due punti
+function distance(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// ============ SETUP SCROLL LISTENERS ============
+function setupScrollListeners(canvasElement) {
     let isProcessing = false;
     
-    // Listener per wheel (rotellina mouse)
+    // Listener per wheel (rotellina mouse) - SOLO QUESTO MUOVE IL PALLINO
     window.addEventListener('wheel', function(e) {
         if (isProcessing) return;
         
@@ -336,7 +340,7 @@ function setupScrollListeners() {
         }
     });
     
-    // Listener per tastiera
+    // Listener per tastiera - SOLO QUESTO MUOVE IL PALLINO
     window.addEventListener('keydown', function(e) {
         // Space, ArrowDown, ArrowRight
         if (['Space', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.code)) {
@@ -351,441 +355,795 @@ function setupScrollListeners() {
             }
         }
     });
+
+    // Listener per click sul canvas - SOLO PER INTERAZIONE CON NODI, NON MUOVE IL PALLINO
+    if (canvasElement) {
+        canvasElement.addEventListener('click', handleCanvasClick);
+        canvasElement.style.cursor = 'pointer';
+    }
     
-    // Click su qualsiasi parte della pagina (per mobile e semplicità)
-    window.addEventListener('click', function() {
-        if (movementState === 'STOPPED' && !isProcessing) {
-            isProcessing = true;
-            startMovingToNextNode();
+    function handleCanvasClick(e) {
+        // Ottieni le coordinate del click relative al canvas
+        const rect = e.target.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        // Coordinate corrente del pallino
+        const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
+        const zoom = 0.025;
+        
+        // Converte il click in coordinate mondo
+        const worldX = (clickX - window.width/2) / zoom + currentPoint.x;
+        const worldY = (clickY - window.height/2) / zoom + currentPoint.y;
+        
+        // Verifica se il click è sul nodo 2
+        const nodo2 = nodes[1];
+        const distToNodo2 = distance(worldX, worldY, nodo2.x, nodo2.y);
+        
+        // Tolleranza per cliccare il nodo
+        if (distToNodo2 < 1500) {
+            showDescriptionNodo2 = !showDescriptionNodo2;
             
-            setTimeout(() => {
-                isProcessing = false;
-            }, 300);
+            // NON avviare il movimento del pallino
+            return;
         }
-    });
-}
-
-// ============ FUNZIONI P5 ============
-function preload() {
-    // Carica le immagini per i nodi
-    nodo1Img = loadImage('assets/nodo_1.png');
-    nodo8Img = loadImage('assets/nodo_8.png');
-    nodo16Img = loadImage('assets/nodo_16.png');
-}
-
-function setup() {
-    p5Instance = window;
-    canvas = createCanvas(windowWidth, windowHeight);
-    canvas.parent('p5-canvas');
-    
-    // Imposta le variabili width e height
-    width = windowWidth;
-    height = windowHeight;
-    
-    pathPoints = scalePoints(originalPoints, 8);
-    smoothPath = createSmoothPath(pathPoints, 30);
-    pathLength = calculatePathLength(smoothPath);
-    
-    // Calcola i 24 nodi equidistanti
-    calculateNodes();
-    
-    // Inizializza le particelle stellato
-    initStarParticles();
-    
-    // Setup event listeners per scroll
-    setupScrollListeners();
-    
-    // Aggiorna il contatore iniziale
-    document.getElementById('current-node').textContent = (currentNodeIndex + 1);
-}
-
-function draw() {
-    // Aggiorna il movimento
-    updateMovement();
-    
-    const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
-    
-    // Sfondo nero con leggera sfumatura per profondità
-    drawDarkGradient();
-    
-    // Disegna le stelle
-    drawStars(currentPoint);
-    
-    push();
-    const zoom = 0.025;
-    translate(width/2, height/2);
-    scale(zoom);
-    translate(-currentPoint.x, -currentPoint.y);
-    
-    // DISEGNA PRIMA LE IMMAGINI (COSÌ STANNO DIETRO AL FILO)
-    if (showNodo1Image && nodo1ImageAlpha > 0 && nodo1Img) {
-        drawNodoImage(1, nodo1Img, nodo1ImageAlpha);
-    }
-    
-    if (showNodo8Image && nodo8ImageAlpha > 0 && nodo8Img) {
-        drawNodoImage(8, nodo8Img, nodo8ImageAlpha);
-    }
-    
-    if (showNodo16Image && nodo16ImageAlpha > 0 && nodo16Img) {
-        drawNodoImage(16, nodo16Img, nodo16ImageAlpha);
-    }
-    
-    // Disegna i fili spiraleggianti
-    drawSpiralThreads();
-    
-    // Disegna il percorso principale
-    drawMainPath();
-    
-    // Disegna i nodi
-    drawNodes();
-    
-    // Disegna il cerchietto
-    drawMovingDot(currentPoint);
-    
-    pop();
-}
-
-function drawDarkGradient() {
-    // Sfondo nero con leggera sfumatura per profondità
-    for (let y = 0; y < height; y++) {
-        const darkness = map(y, 0, height, 10, 0);
-        stroke(darkness, darkness, darkness);
-        line(0, y, width, y);
     }
 }
 
-function map(value, start1, stop1, start2, stop2) {
-    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
-}
-
-function drawStars(currentPoint) {
-    const time = millis() * 0.001;
-    const zoom = 0.025;
+// ============ SKETCH P5 ============
+const sketch = (p) => {
+    // Variabili locali a p5
+    let canvas;
+    let starParticles = [];
+    let font;
     
-    // Per ogni stella
-    starParticles.forEach(star => {
-        // Calcola posizione relativa al punto corrente (considerando lo zoom)
-        const relX = (star.x - currentPoint.x * zoom) * zoom;
-        const relY = (star.y - currentPoint.y * zoom) * zoom;
-        
-        // Controlla se la stella è visibile nella viewport
-        if (relX > -width/2 && relX < width/2 && relY > -height/2 && relY < height/2) {
-            // Effetto tremolio
-            const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.5 + 0.5;
-            const brightness = star.brightness * twinkle;
-            
-            // Disegna la stella
-            noStroke();
-            fill(255, 255, 255, brightness);
-            ellipse(
-                width/2 + relX / zoom,
-                height/2 + relY / zoom,
-                star.size,
-                star.size
-            );
-            
-            // Bagliore per stelle più grandi
-            if (star.size > 2) {
-                fill(255, 255, 255, brightness * 0.3);
-                ellipse(
-                    width/2 + relX / zoom,
-                    height/2 + relY / zoom,
-                    star.size * 2,
-                    star.size * 2
-                );
-            }
-        }
-    });
-}
-
-function drawSpiralThreads() {
-    const time = millis();
-    
-    // 8 fili spiraleggianti colorati
-    const colors = [
-        [255, 200, 220],
-        [200, 220, 255],
-        [220, 255, 200],
-        [255, 255, 180],
-        [255, 180, 220],
-        [180, 220, 255],
-        [220, 180, 255],
-        [255, 220, 180]
-    ];
-    
-    for (let threadIndex = 0; threadIndex < 8; threadIndex++) {
-        const phaseOffset = (threadIndex / 8) * Math.PI * 2;
-        const speed = 0.001;
-        const radius = 200 * (0.7 + Math.random() * 0.6);
-        
-        // Calcola i punti per questo filo spiraleggiante
-        const threadPoints = [];
-        
-        for (let i = 0; i < smoothPath.length; i += 3) {
-            const basePoint = smoothPath[i];
-            const t = i / smoothPath.length;
-            
-            // Calcola la normale approssimativa
-            let nextIndex = Math.min(i + 1, smoothPath.length - 1);
-            const dx = smoothPath[nextIndex].x - basePoint.x;
-            const dy = smoothPath[nextIndex].y - basePoint.y;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            
-            let normal = {x: 0, y: 1};
-            if (length > 0) {
-                normal = { x: -dy / length, y: dx / length };
-            }
-            
-            // Calcola lo spostamento spiraleggiante
-            const spiralAngle = t * Math.PI * 4 + phaseOffset + time * speed;
-            const offsetX = Math.cos(spiralAngle) * radius;
-            const offsetY = Math.sin(spiralAngle) * radius;
-            
-            // Applica lo spostamento lungo la normale
-            threadPoints.push({
-                x: basePoint.x + normal.x * offsetX + normal.y * offsetY,
-                y: basePoint.y + normal.y * offsetX - normal.x * offsetY
+    // Funzioni che usano p5
+    function initStarParticles() {
+        starParticles = [];
+        for (let i = 0; i < STAR_COUNT; i++) {
+            starParticles.push({
+                x: p.random(p.width * 100),
+                y: p.random(p.height * 100),
+                size: p.random(1, 4),
+                brightness: p.random(50, 150),
+                twinkleSpeed: p.random(0.01, 0.03),
+                twinklePhase: p.random(p.TWO_PI)
             });
         }
-        
-        // Disegna il filo spiraleggiante
-        const color = colors[threadIndex % colors.length];
-        stroke(color[0], color[1], color[2], 120);
-        strokeWeight(15);
-        strokeCap(ROUND);
-        noFill();
-        
-        beginShape();
-        threadPoints.forEach(point => {
-            vertex(point.x, point.y);
+    }
+    
+   function createTextLines(node) {
+    textLines = [];
+    
+    // Dividi il testo in righe
+    const lines = nodo2Text.split('\n');
+    
+    // PER MODIFICARE SPAZIATURA TRA RIGHE: cambia lineHeight (attualmente 800)
+    const lineHeight = 800; // ← CAMBIA QUI per spazio tra righe
+    
+    // PER MODIFICARE POSIZIONE Y INIZIALE: startY calcola dove inizia il testo verticalmente
+    const startY = node.y - ((lines.length - 1) * lineHeight) / 2;
+    
+    // PARAMETRI ONDA PER OGNI RIGA
+    const lineWaves = [];
+    lines.forEach(() => {
+        lineWaves.push({
+            amplitude: p.random(50, 150),   // ← AMPIEZZA ONDA RIGA
+            frequency: p.random(0.01, 0.03), // ← FREQUENZA ONDA RIGA
+            phase: p.random(0, 1000),        // ← FASE INIZIALE
+            breakPoint: p.random(0.3, 0.7),  // ← PUNTO DI SPEZZATURA (0-1)
+            angle: p.random(-0.2, 0.2),      // ← ANGOLO INCLINAZIONE RIGA
+            zigzag: p.random() > 0.5         // ← SE USARE ZIGZAG
         });
-        endShape();
-    }
-}
-
-function drawMainPath() {
-    // LINEA PRINCIPALE BIANCA TRATTEGGIATA
-    const pulse = Math.sin(millis() * 0.002) * 20;
-    const currentThickness = 80 + pulse;
+    });
     
-    stroke(255, 255, 255, 220);
-    strokeWeight(currentThickness);
-    strokeCap(ROUND);
-    
-    // Effetto tratteggiato
-    drawingContext.setLineDash([100, 40]);
-    
-    noFill();
-    beginShape();
-    for (let i = 0; i < smoothPath.length; i += 1) {
-        vertex(smoothPath[i].x, smoothPath[i].y);
-    }
-    endShape();
-    
-    // Ripristina linea solida
-    drawingContext.setLineDash([]);
-    
-    // Bagliore
-    for (let i = 1; i <= 3; i++) {
-        stroke(255, 255, 255, 40 - i * 10);
-        strokeWeight(currentThickness + i * 60);
+    lines.forEach((line, lineIndex) => {
+        // Rimuovi spazi extra all'inizio e alla fine
+        const trimmedLine = line.trim();
+        if (trimmedLine === '') return;
         
-        beginShape();
-        for (let j = 0; j < smoothPath.length; j += 2) {
-            vertex(smoothPath[j].x, smoothPath[j].y);
-        }
-        endShape();
-    }
-}
-
-function drawNodes() {
-    const time = millis() * 0.001;
-    
-    nodes.forEach((node, index) => {
-        const isCurrent = index === currentNodeIndex;
+        // Suddividi la riga in parole per animazioni individuali
+        const words = trimmedLine.split(/\s+/);
+        const wordsInLine = [];
         
-        // Animazione di pulsazione per tutti i nodo
-        const basePulse = Math.sin(time * 3 + index * 0.5) * 0.3 + 0.7;
-        const nodeSize = 200 * basePulse;
+        // PER MODIFICARE SPAZIATURA TRA PAROLE: cambia wordSpacing (attualmente 200)
+        const wordSpacing = 200; // ← CAMBIA QUI per spazio tra parole
         
-        // Bagliore extra per nodo corrente
-        if (isCurrent) {
-            for (let i = 5; i > 0; i--) {
-                const alpha = 20 - i * 3;
-                const size = 400 + i * 80;
-                const extraPulse = Math.sin(time * 2 + i) * 30;
-                noStroke();
-                fill(node.color[0], node.color[1], node.color[2], alpha);
-                ellipse(node.x, node.y, size + extraPulse, size + extraPulse);
-            }
-        }
+        // Calcola larghezza approssimativa della riga per centrare
+        const estimatedCharWidth = 180;
+        let totalLineWidth = 0;
+        words.forEach(word => {
+            totalLineWidth += word.length * estimatedCharWidth + wordSpacing;
+        });
+        totalLineWidth -= wordSpacing;
         
-        // Anello del nodo rotante
-        push();
-        translate(node.x, node.y);
-        rotate(time * 0.5 + index * 0.1);
+        // POSIZIONE X INIZIALE CON ONDA
+        const wave = lineWaves[lineIndex];
+        let currentX = node.x - totalLineWidth / 2;
         
-        strokeWeight(30);
-        stroke(node.color[0], node.color[1], node.color[2], isCurrent ? 200 : 100);
-        noFill();
-        ellipse(0, 0, nodeSize * 1.5, nodeSize * 1.5);
+        // APPLICA ONDA ALLA RIGA
+        const baseLineY = startY + lineIndex * lineHeight;
         
-        // Piccoli punti sull'anello
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2;
-            const pointX = Math.cos(angle) * nodeSize * 0.75;
-            const pointY = Math.sin(angle) * nodeSize * 0.75;
-            const pointPulse = Math.sin(time * 4 + i) * 10;
+        words.forEach((word, wordIndex) => {
+            const wordWidth = word.length * estimatedCharWidth;
             
-            fill(255, 255, 255, 200);
-            noStroke();
-            ellipse(pointX, pointY, 40 + pointPulse, 40 + pointPulse);
-        }
+            // Calcola posizione lungo la riga (0-1)
+            const t = wordIndex / Math.max(words.length - 1, 1);
+            
+            // CALCOLA ONDA ORIZZONTALE E VERTICALE
+            let waveX = 0;
+            let waveY = 0;
+            
+            // Onda sinusoidale base
+            const sineWave = p.sin(t * Math.PI * 2 * wave.frequency + wave.phase) * wave.amplitude;
+            
+            if (wave.zigzag) {
+                // Effetto zigzag (onda triangolare)
+                const zigzagT = (t * 4) % 1;
+                waveY = (zigzagT < 0.5 ? zigzagT * 2 : 2 - zigzagT * 2) * wave.amplitude - wave.amplitude/2;
+                waveX = p.sin(t * Math.PI * 4) * 50;
+            } else if (t > wave.breakPoint && words.length > 3) {
+                // Spezzatura della riga dopo breakPoint
+                waveY = sineWave + 100;
+                waveX = 100;
+            } else {
+                // Onda sinusoidale normale
+                waveY = sineWave;
+                waveX = p.cos(t * Math.PI * 2 * wave.frequency + wave.phase) * 30;
+            }
+            
+            // Determina se questa parola deve avere animazioni speciali
+            const isSpecialWord = word.includes('SLASH') || 
+                                  word.includes('CURVA') || 
+                                  word.includes('ritmO') ||
+                                  word.includes('raPIdiTà');
+            
+            // POSIZIONE FINALE CON ONDA E INCLINAZIONE
+            const rotatedX = currentX * p.cos(wave.angle) - baseLineY * p.sin(wave.angle);
+            const rotatedY = currentX * p.sin(wave.angle) + baseLineY * p.cos(wave.angle);
+            
+            wordsInLine.push({
+                text: word,
+                x: currentX + wordWidth / 2 + waveX,
+                y: baseLineY + waveY,
+                baseX: currentX + wordWidth / 2,
+                baseY: baseLineY,
+                
+                // PER MODIFICARE ROTAZIONE INIZIALE:
+                rotation: isSpecialWord ? p.random(-0.5, 0.5) : 
+                          wave.angle + p.random(-0.1, 0.1) + (waveY / 200) * 0.2,
+                
+                // PARAMETRI ONDA INDIVIDUALI
+                waveAmpY: p.random(30, 100),
+                waveSpeedY: p.random(0.02, 0.05),
+                waveOffsetY: p.random(0, 1000),
+                
+                // ONDE ORIZZONTALI PER MOVIMENTO
+                waveAmpX: isSpecialWord ? p.random(150, 400) : p.random(20, 60),
+                waveSpeedX: isSpecialWord ? p.random(0.04, 0.08) : p.random(0.01, 0.03),
+                waveOffsetX: p.random(0, 1000),
+                
+                // Animazioni extra per parole speciali
+                specialMovement: isSpecialWord,
+                pulseAmp: isSpecialWord ? p.random(80, 150) : p.random(10, 30),
+                pulseSpeed: isSpecialWord ? p.random(0.06, 0.12) : p.random(0.02, 0.04),
+                
+                // PER MODIFICARE ROTAZIONI CARATTERI:
+                charRotations: [],
+                charSpacings: [], // Spazi individuali tra caratteri
+                
+                // NUOVI PARAMETRI PER ONDE COMPLESSE
+                secondaryWaveAmp: p.random(20, 50),
+                secondaryWaveSpeed: p.random(0.1, 0.2),
+                wobbleAmount: p.random(0, 0.3),
+                isLineStart: wordIndex === 0,
+                isLineEnd: wordIndex === words.length - 1
+            });
+            
+            // Inizializza rotazioni e spazi per ogni carattere
+            const lastWord = wordsInLine[wordsInLine.length - 1];
+            
+            // PER MODIFICARE SPAZIATURA TRA CARATTERI: cambia baseCharSpacing (attualmente 180)
+            const baseCharSpacing = 180;
+            
+            for (let i = 0; i < word.length; i++) {
+                // Rotazioni caratteri con pattern ondulato
+                const charT = i / (word.length - 1 || 1);
+                const charWave = p.sin(charT * Math.PI * 3) * 0.3;
+                
+                lastWord.charRotations.push(
+                    isSpecialWord ? p.random(-0.8, 0.8) : 
+                    wave.angle * 0.5 + charWave + p.random(-0.15, 0.15)
+                );
+                
+                // Spazi individuali tra caratteri con pattern
+                const spacingVariation = isSpecialWord ? 80 : 60;
+                const spacingPattern = p.sin(charT * Math.PI * 2) * spacingVariation * 0.5;
+                
+                lastWord.charSpacings.push(
+                    baseCharSpacing + spacingPattern + 
+                    (isSpecialWord ? p.random(-spacingVariation, spacingVariation) : 0)
+                );
+            }
+            
+            // Sposta currentX per la prossima parola con possibile offset ondulato
+            const nextWordOffset = p.sin((wordIndex + 0.5) * 0.5) * 30;
+            currentX += wordWidth + wordSpacing + nextWordOffset;
+        });
         
-        pop();
-        
-        // Centro del nodo
-        noStroke();
-        fill(node.color[0], node.color[1], node.color[2], isCurrent ? 255 : 150);
-        ellipse(node.x, node.y, nodeSize * 0.6, nodeSize * 0.6);
-        
-        // Punto centrale luminoso
-        fill(255, 255, 255, 255);
-        ellipse(node.x, node.y, 40, 40);
-        
-        // Punto super luminoso
-        fill(255, 255, 255, 255);
-        ellipse(node.x, node.y, 10, 10);
+        textLines.push(wordsInLine);
     });
 }
 
-function drawNodoImage(nodeIndex, img, alpha) {
-    if (nodes.length > nodeIndex && img) {
-        const node = nodes[nodeIndex];
-        const settings = NODO_IMAGE_SETTINGS[nodeIndex];
-        
-        if (!settings) return;
-        
-        push();
-        
-        // Calcola la posizione usando le impostazioni
-        const imageX = node.x + settings.offsetX;
-        const imageY = node.y + settings.offsetY;
-        
-        // Calcola dimensioni proporzionali
-        const desiredWidth = img.width * settings.scale;
-        const desiredHeight = img.height * settings.scale;
-        
-        // Applica la trasparenza SENZA STROKE/BORDO
-        tint(255, alpha);
-        
-        // Disegna l'immagine senza alcun bordo
-        image(img, imageX, imageY, desiredWidth, desiredHeight);
-        
-        pop();
+function drawNodo2Description() {
+    if (!showDescriptionNodo2 && descriptionAlpha <= 0) return;
+    
+    // Anima l'alpha
+    if (showDescriptionNodo2) {
+        descriptionAlpha = Math.min(descriptionAlpha + DESCRIPTION_FADE_SPEED, 255);
+    } else {
+        descriptionAlpha = Math.max(descriptionAlpha - DESCRIPTION_FADE_SPEED, 0);
+    }
+    
+    const time = p.millis() * 0.001;
+    
+    // Disegna ogni riga (ogni riga è un array di parole)
+    textLines.forEach((wordsInLine, lineIndex) => {
+        // Disegna ogni parola della riga
+        wordsInLine.forEach((word, wordIndex) => {
+            p.push();
+            
+            // CALCOLA EFFETTI ONDULATORI MULTIPLI
+            const waveY = p.sin(time * word.waveSpeedY + word.waveOffsetY) * word.waveAmpY;
+            const waveX = p.cos(time * word.waveSpeedX + word.waveOffsetX) * word.waveAmpX;
+            
+            // Onda secondaria per movimento più complesso
+            const secondaryWave = p.sin(time * word.secondaryWaveSpeed * 2) * word.secondaryWaveAmp;
+            
+            // Effetto pulsazione
+            const pulse = p.sin(time * word.pulseSpeed) * word.pulseAmp;
+            
+            // Wobble per parole speciali
+            const wobble = word.specialMovement ? 
+                p.sin(time * 3 + wordIndex) * word.wobbleAmount * 50 : 0;
+            
+            // CALCOLA POSIZIONE FINALE
+            let finalX = word.x + waveX + secondaryWave * 0.3 + wobble;
+            let finalY = word.y + waveY + pulse + secondaryWave * 0.7;
+            
+            // Aggiungi offset per inizio/fine riga
+            if (word.isLineStart) {
+                finalX += p.sin(time * 1.5) * 40;
+                finalY += p.cos(time * 1.5) * 20;
+            }
+            if (word.isLineEnd) {
+                finalX += p.cos(time * 1.2) * 40;
+                finalY += p.sin(time * 1.2) * 20;
+            }
+            
+            // Sposta alla posizione della parola
+            p.translate(finalX, finalY);
+            
+            // ROTAZIONE DINAMICA
+            let wordRotation = word.rotation;
+            
+            if (word.specialMovement) {
+                // Rotazione speciale per parole chiave
+                wordRotation += p.sin(time * 2) * 0.4 + 
+                              p.cos(time * 1.3 + wordIndex) * 0.2;
+            } else {
+                // Leggera rotazione naturale
+                wordRotation += p.sin(time * 0.7 + wordIndex * 0.2) * 0.1;
+            }
+            
+            p.rotate(wordRotation);
+            
+            // DIMENSIONE TESTO DINAMICA
+            const baseTextSize = 320;
+            let sizeVariation = 0;
+            
+            if (word.specialMovement) {
+                sizeVariation = p.sin(time * 2) * 50 + 
+                              p.cos(time * 1.7) * 20;
+            } else {
+                sizeVariation = p.sin(time * 0.8 + wordIndex) * 15;
+            }
+            
+            p.textSize(baseTextSize + sizeVariation);
+            p.textAlign(p.CENTER, p.CENTER);
+            
+            // DISEGNA OGNI CARATTERE INDIVIDUALMENTE
+            // Calcola larghezza totale con spazi individuali
+            let totalWidth = 0;
+            word.charSpacings.forEach(spacing => {
+                totalWidth += spacing;
+            });
+            if (word.charSpacings.length > 0) {
+                totalWidth -= word.charSpacings[word.charSpacings.length - 1];
+            }
+            
+            const startX = -totalWidth / 2;
+            p.translate(startX, 0);
+            
+            let currentCharX = 0;
+            for (let i = 0; i < word.text.length; i++) {
+                p.push();
+                
+                // POSIZIONE CARATTERE CON ONDA
+                const charTime = time + i * 0.3;
+                const charWaveX = p.sin(charTime * 4) * 5;
+                const charWaveY = p.cos(charTime * 5) * 8;
+                
+                p.translate(currentCharX + charWaveX, charWaveY);
+                
+                // ROTAZIONE CARATTERE DINAMICA
+                let charRotation = word.charRotations[i];
+                charRotation += p.sin(charTime * 6) * 0.15;
+                
+                if (word.specialMovement) {
+                    charRotation += p.sin(charTime * 8 + i) * 0.3;
+                }
+                
+                p.rotate(charRotation);
+                
+                // COLORE CON VARIAZIONI
+                const pulseBright = p.sin(time * 3 + i * 0.2) * 20;
+                let brightness = 220 + pulseBright;
+                
+                if (word.specialMovement) {
+                    const specialPulse = p.sin(time * 5 + i * 0.5) * 50;
+                    brightness = 240 + specialPulse;
+                }
+                
+                p.fill(brightness, brightness, brightness, descriptionAlpha);
+                p.noStroke();
+                
+                // Disegna il carattere
+                p.text(word.text[i], 0, 0);
+                
+                // BAGLIORE PER PAROLE SPECIALI
+                if (word.specialMovement) {
+                    const glowAlpha = descriptionAlpha * (0.3 + p.sin(time * 6 + i) * 0.2);
+                    p.fill(255, 255, 255, glowAlpha);
+                    p.textSize(baseTextSize + sizeVariation + 10);
+                    p.text(word.text[i], 0, 0);
+                    p.textSize(baseTextSize + sizeVariation);
+                }
+                
+                p.pop();
+                
+                // SPOSTA PER PROSSIMO CARATTERE CON ANIMAZIONE
+                const spacing = word.charSpacings[i] || baseCharSpacing;
+                const spacingWave = p.sin(time * 2 + i * 0.5) * 10;
+                currentCharX += spacing + spacingWave;
+            }
+            
+            // LINEA GUIDA VISIVA (opzionale, per debugging)
+            if (false) {
+                p.push();
+                p.translate(-startX, 0);
+                p.noFill();
+                p.stroke(255, 100, 100, descriptionAlpha * 0.3);
+                p.strokeWeight(2);
+                
+                // Disegna curva guida
+                p.beginShape();
+                for (let i = 0; i <= 10; i++) {
+                    const t = i / 10;
+                    const guideX = p.lerp(-50, 50, t);
+                    const guideY = p.sin(t * Math.PI * 2) * 30;
+                    p.vertex(guideX, guideY);
+                }
+                p.endShape();
+                p.pop();
+            }
+            
+            p.pop();
+        });
+    });
+    
+    // Se stiamo chiudendo e alpha è 0, pulisci le righe
+    if (!showDescriptionNodo2 && descriptionAlpha <= 0) {
+        textLines = [];
     }
 }
-
-function drawMovingDot(currentPoint) {
-    const time = millis() * 0.001;
     
-    // Bagliore esterno molto ampio
-    for (let i = 15; i > 0; i--) {
-        const size = 300 + i * 40;
-        const alpha = 8 - i * 0.4;
-        const pulse = Math.sin(time * 2 + i * 0.3) * 20;
-        
-        noStroke();
-        fill(255, 255, 255, alpha);
-        ellipse(currentPoint.x, currentPoint.y, size + pulse, size + pulse);
-    }
     
-    // Bagliore intermedio
-    for (let i = 5; i > 0; i--) {
-        const size = 150 + i * 30;
-        const alpha = 15 - i * 2;
-        const pulse = Math.sin(time * 3 + i) * 15;
-        
-        fill(255, 255, 255, alpha);
-        ellipse(currentPoint.x, currentPoint.y, size + pulse, size + pulse);
-    }
-    
-    // Cerchietto principale (pulsante)
-    const mainPulse = Math.sin(time * 5) * 25;
-    noStroke();
-    fill(255, 255, 255, 220);
-    ellipse(currentPoint.x, currentPoint.y, 100 + mainPulse, 100 + mainPulse);
-    
-    // Nucleo brillante
-    fill(255, 255, 200, 255);
-    ellipse(currentPoint.x, currentPoint.y, 50, 50);
-    
-    // Punto centrale super luminoso
-    fill(255, 255, 255, 255);
-    ellipse(currentPoint.x, currentPoint.y, 15, 15);
-    
-    // Scie di movimento (solo quando si muove)
-    if (movementState === 'MOVING_TO_NODE') {
-        for (let i = 0; i < 12; i++) {
-            const angle = time * 8 + (i / 12) * Math.PI * 2;
-            const distance = 60 + Math.sin(time * 6) * 30;
-            const trailX = currentPoint.x + Math.cos(angle) * distance;
-            const trailY = currentPoint.y + Math.sin(angle) * distance;
-            const trailSize = 20 + Math.sin(time * 7 + i) * 10;
-            
-            fill(255, 255, 255, 150);
-            ellipse(trailX, trailY, trailSize, trailSize);
+    function drawDarkGradient() {
+        // Sfondo nero con leggera sfumatura per profondità
+        for (let y = 0; y < p.height; y++) {
+            const darkness = p.map(y, 0, p.height, 10, 0);
+            p.stroke(darkness, darkness, darkness);
+            p.line(0, y, p.width, y);
         }
     }
-}
-
-console.log("currentNode:", currentNodeIndex, "targetNode:", targetNodeIndex);
-
-
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
-    width = windowWidth;
-    height = windowHeight;
-    // Ricrea le stelle per il nuovo dimensionamento
-    initStarParticles();
-}
-
-// ============ INIZIALIZZAZIONE ============
-// Crea una nuova istanza di p5
-new p5(function(p) {
-    // Sostituisci le funzioni globali di p5
-    window.setup = setup;
-    window.draw = draw;
-    window.windowResized = windowResized;
-    window.preload = preload;
-    window.loadImage = p.loadImage;
-    window.image = p.image;
-    window.createCanvas = p.createCanvas;
-    window.resizeCanvas = p.resizeCanvas;
-    window.background = p.background;
-    window.fill = p.fill;
-    window.stroke = p.stroke;
-    window.strokeWeight = p.strokeWeight;
-    window.noStroke = p.noStroke;
-    window.noFill = p.noFill;
-    window.ellipse = p.ellipse;
-    window.rect = p.rect;
-    window.line = p.line;
-    window.beginShape = p.beginShape;
-    window.endShape = p.endShape;
-    window.vertex = p.vertex;
-    window.translate = p.translate;
-    window.scale = p.scale;
-    window.rotate = p.rotate;
-    window.push = p.push;
-    window.pop = p.pop;
-    window.millis = p.millis;
-    window.textSize = p.textSize;
-    window.textAlign = p.textAlign;
-    window.text = p.text;
-    window.tint = p.tint;
-    window.strokeCap = p.strokeCap;
-    window.drawingContext = p.drawingContext;
+    
+    function drawStars(currentPoint) {
+        const time = p.millis() * 0.001;
+        const zoom = 0.025;
+        
+        starParticles.forEach(star => {
+            // Calcola posizione relativa al punto corrente
+            const relX = (star.x - currentPoint.x * zoom) * zoom;
+            const relY = (star.y - currentPoint.y * zoom) * zoom;
+            
+            // Controlla se la stella è visibile nella viewport
+            if (relX > -p.width/2 && relX < p.width/2 && relY > -p.height/2 && relY < p.height/2) {
+                // Effetto tremolio
+                const twinkle = p.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.5 + 0.5;
+                const brightness = star.brightness * twinkle;
+                
+                // Disegna la stella
+                p.noStroke();
+                p.fill(255, 255, 255, brightness);
+                p.ellipse(
+                    p.width/2 + relX / zoom,
+                    p.height/2 + relY / zoom,
+                    star.size,
+                    star.size
+                );
+            }
+        });
+    }
+    
+    function drawSpiralThreads() {
+        const time = p.millis();
+        
+        // 8 fili spiraleggianti colorati
+        const colors = [
+            [255, 200, 220],
+            [200, 220, 255],
+            [220, 255, 200],
+            [255, 255, 180],
+            [255, 180, 220],
+            [180, 220, 255],
+            [220, 180, 255],
+            [255, 220, 180]
+        ];
+        
+        for (let threadIndex = 0; threadIndex < 8; threadIndex++) {
+            const phaseOffset = (threadIndex / 8) * p.TWO_PI;
+            const speed = 0.001;
+            const radius = 200 * (0.7 + p.random(0.6));
+            
+            // Calcola i punti per questo filo spiraleggiante
+            const threadPoints = [];
+            
+            for (let i = 0; i < smoothPath.length; i += 3) {
+                const basePoint = smoothPath[i];
+                const t = i / smoothPath.length;
+                
+                // Calcola la normale approssimativa
+                let nextIndex = Math.min(i + 1, smoothPath.length - 1);
+                const dx = smoothPath[nextIndex].x - basePoint.x;
+                const dy = smoothPath[nextIndex].y - basePoint.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                
+                let normal = {x: 0, y: 1};
+                if (length > 0) {
+                    normal = { x: -dy / length, y: dx / length };
+                }
+                
+                // Calcola lo spostamento spiraleggiante
+                const spiralAngle = t * p.PI * 4 + phaseOffset + time * speed;
+                const offsetX = Math.cos(spiralAngle) * radius;
+                const offsetY = Math.sin(spiralAngle) * radius;
+                
+                // Applica lo spostamento lungo la normale
+                threadPoints.push({
+                    x: basePoint.x + normal.x * offsetX + normal.y * offsetY,
+                    y: basePoint.y + normal.y * offsetX - normal.x * offsetY
+                });
+            }
+            
+            // Disegna il filo spiraleggiante
+            const color = colors[threadIndex % colors.length];
+            p.stroke(color[0], color[1], color[2], 120);
+            p.strokeWeight(15);
+            p.strokeCap(p.ROUND);
+            p.noFill();
+            
+            p.beginShape();
+            threadPoints.forEach(point => {
+                p.vertex(point.x, point.y);
+            });
+            p.endShape();
+        }
+    }
+    
+    function drawMainPath() {
+        // LINEA PRINCIPALE BIANCA TRATTEGGIATA
+        const pulse = p.sin(p.millis() * 0.002) * 20;
+        const currentThickness = 80 + pulse;
+        
+        p.stroke(255, 255, 255, 220);
+        p.strokeWeight(currentThickness);
+        p.strokeCap(p.ROUND);
+        
+        // Effetto tratteggiato
+        p.drawingContext.setLineDash([100, 40]);
+        
+        p.noFill();
+        p.beginShape();
+        for (let i = 0; i < smoothPath.length; i += 1) {
+            p.vertex(smoothPath[i].x, smoothPath[i].y);
+        }
+        p.endShape();
+        
+        // Ripristina linea solida
+        p.drawingContext.setLineDash([]);
+        
+        // Bagliore
+        for (let i = 1; i <= 3; i++) {
+            p.stroke(255, 255, 255, 40 - i * 10);
+            p.strokeWeight(currentThickness + i * 60);
+            
+            p.beginShape();
+            for (let j = 0; j < smoothPath.length; j += 2) {
+                p.vertex(smoothPath[j].x, smoothPath[j].y);
+            }
+            p.endShape();
+        }
+    }
+    
+    function drawNodes() {
+        const time = p.millis() * 0.001;
+        
+        nodes.forEach((node, index) => {
+            const isCurrent = index === currentNodeIndex;
+            
+            // Animazione di pulsazione per tutti i nodi
+            const basePulse = p.sin(time * 3 + index * 0.5) * 0.3 + 0.7;
+            const nodeSize = 200 * basePulse;
+            
+            // Bagliore extra per nodo corrente
+            if (isCurrent) {
+                for (let i = 5; i > 0; i--) {
+                    const alpha = 20 - i * 3;
+                    const size = 400 + i * 80;
+                    const extraPulse = p.sin(time * 2 + i) * 30;
+                    p.noStroke();
+                    p.fill(node.color[0], node.color[1], node.color[2], alpha);
+                    p.ellipse(node.x, node.y, size + extraPulse, size + extraPulse);
+                }
+            }
+            
+            // Anello del nodo rotante
+            p.push();
+            p.translate(node.x, node.y);
+            p.rotate(time * 0.5 + index * 0.1);
+            
+            p.strokeWeight(30);
+            p.stroke(node.color[0], node.color[1], node.color[2], isCurrent ? 200 : 100);
+            p.noFill();
+            p.ellipse(0, 0, nodeSize * 1.5, nodeSize * 1.5);
+            
+            // Piccoli punti sull'anello
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * p.TWO_PI;
+                const pointX = p.cos(angle) * nodeSize * 0.75;
+                const pointY = p.sin(angle) * nodeSize * 0.75;
+                const pointPulse = p.sin(time * 4 + i) * 10;
+                
+                p.fill(255, 255, 255, 200);
+                p.noStroke();
+                p.ellipse(pointX, pointY, 40 + pointPulse, 40 + pointPulse);
+            }
+            
+            p.pop();
+            
+            // Centro del nodo
+            p.noStroke();
+            p.fill(node.color[0], node.color[1], node.color[2], isCurrent ? 255 : 150);
+            p.ellipse(node.x, node.y, nodeSize * 0.6, nodeSize * 0.6);
+            
+            // Punto centrale luminoso
+            p.fill(255, 255, 255, 255);
+            p.ellipse(node.x, node.y, 40, 40);
+            
+            // Punto super luminoso
+            p.fill(255, 255, 255, 255);
+            p.ellipse(node.x, node.y, 10, 10);
+        });
+    }
+    
+    function drawNodoImage(nodeIndex, img, alpha) {
+        if (nodes.length > nodeIndex && img) {
+            const node = nodes[nodeIndex];
+            const settings = NODO_IMAGE_SETTINGS[nodeIndex];
+            
+            if (!settings) return;
+            
+            p.push();
+            
+            // Calcola la posizione usando le impostazioni
+            const imageX = node.x + settings.offsetX;
+            const imageY = node.y + settings.offsetY;
+            
+            // Calcola dimensioni proporzionali
+            const desiredWidth = img.width * settings.scale;
+            const desiredHeight = img.height * settings.scale;
+            
+            // Applica la trasparenza
+            p.tint(255, alpha);
+            
+            // Disegna l'immagine
+            p.image(img, imageX, imageY, desiredWidth, desiredHeight);
+            
+            p.pop();
+        }
+    }
+    
+    function drawMovingDot(currentPoint) {
+        const time = p.millis() * 0.001;
+        
+        // Bagliore esterno molto ampio
+        for (let i = 15; i > 0; i--) {
+            const size = 300 + i * 40;
+            const alpha = 8 - i * 0.4;
+            const pulse = p.sin(time * 2 + i * 0.3) * 20;
+            
+            p.noStroke();
+            p.fill(255, 255, 255, alpha);
+            p.ellipse(currentPoint.x, currentPoint.y, size + pulse, size + pulse);
+        }
+        
+        // Bagliore intermedio
+        for (let i = 5; i > 0; i--) {
+            const size = 150 + i * 30;
+            const alpha = 15 - i * 2;
+            const pulse = p.sin(time * 3 + i) * 15;
+            
+            p.fill(255, 255, 255, alpha);
+            p.ellipse(currentPoint.x, currentPoint.y, size + pulse, size + pulse);
+        }
+        
+        // Cerchietto principale (pulsante)
+        const mainPulse = p.sin(time * 5) * 25;
+        p.noStroke();
+        p.fill(255, 255, 255, 220);
+        p.ellipse(currentPoint.x, currentPoint.y, 100 + mainPulse, 100 + mainPulse);
+        
+        // Nucleo brillante
+        p.fill(255, 255, 200, 255);
+        p.ellipse(currentPoint.x, currentPoint.y, 50, 50);
+        
+        // Punto centrale super luminoso
+        p.fill(255, 255, 255, 255);
+        p.ellipse(currentPoint.x, currentPoint.y, 15, 15);
+        
+        // Scie di movimento (solo quando si muove)
+        if (movementState === 'MOVING_TO_NODE') {
+            for (let i = 0; i < 12; i++) {
+                const angle = time * 8 + (i / 12) * p.TWO_PI;
+                const distance = 60 + p.sin(time * 6) * 30;
+                const trailX = currentPoint.x + p.cos(angle) * distance;
+                const trailY = currentPoint.y + p.sin(angle) * distance;
+                const trailSize = 20 + p.sin(time * 7 + i) * 10;
+                
+                p.fill(255, 255, 255, 150);
+                p.ellipse(trailX, trailY, trailSize, trailSize);
+            }
+        }
+    }
+    
+    // Esponi le variabili globalmente per il click handler
+    window.createTextLines = createTextLines;
     window.width = p.width;
     window.height = p.height;
-});
+    
+    p.preload = function() {
+        // Carica le immagini per i nodi
+        nodo1Img = p.loadImage('assets/nodo_1.png');
+        nodo8Img = p.loadImage('assets/nodo_8.png');
+        nodo15Img = p.loadImage('assets/nodo_15.png');
+        nodo16Img = p.loadImage('assets/nodo_16.png');
+        nodo17Img = p.loadImage('assets/nodo_17.png');
+        nodo18mg = p.loadImage('assets/nodo_18.png');
+        nodo19Img = p.loadImage('assets/nodo_19.png');
+        nodo20Img = p.loadImage('assets/nodo_20.png');
+        nodo21Img = p.loadImage('assets/nodo_21.png');
+        nodo22mg = p.loadImage('assets/nodo_22.png');
+        nodo23Img = p.loadImage('assets/nodo_23.png');
+        nodo24Img = p.loadImage('assets/nodo_24.png');
+    };
+    
+    p.setup = function() {
+        console.log("Setup p5.js");
+        canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+        canvas.parent('p5-canvas');
+        
+        // Inizializza le variabili globali
+        window.width = p.width;
+        window.height = p.height;
+        
+        // Calcola il percorso
+        pathPoints = scalePoints(originalPoints, 8);
+        smoothPath = createSmoothPath(pathPoints, 30);
+        pathLength = calculatePathLength(smoothPath);
+        
+        // Calcola i nodi
+        calculateNodes();
+        
+        // Inizializza le stelle
+        initStarParticles();
+        
+        // Setup event listeners
+        setupScrollListeners(canvas.elt);
+        
+        // Aggiorna il contatore iniziale
+        const nodeElement = document.getElementById('current-node');
+        if (nodeElement) {
+            nodeElement.textContent = (currentNodeIndex + 1);
+        }
+        
+        console.log("Setup completato");
+        console.log("Nodo 2:", nodes[1]);
+    };
+    
+    p.draw = function() {
+        // Aggiorna il movimento
+        updateMovement();
+        
+        const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
+        
+        // Disegna sfondo
+        drawDarkGradient();
+        
+        // Disegna stelle
+        drawStars(currentPoint);
+        
+        p.push();
+        const zoom = 0.025;
+        p.translate(p.width/2, p.height/2);
+        p.scale(zoom);
+        p.translate(-currentPoint.x, -currentPoint.y);
+        
+        // DISEGNA PRIMA LE IMMAGINI (COSÌ STANNO DIETRO AL FILO)
+        if (showNodo1Image && nodo1ImageAlpha > 0 && nodo1Img) {
+            drawNodoImage(1, nodo1Img, nodo1ImageAlpha);
+        }
+        
+        if (showNodo8Image && nodo8ImageAlpha > 0 && nodo8Img) {
+            drawNodoImage(8, nodo8Img, nodo8ImageAlpha);
+        }
+        
+        if (showNodo16Image && nodo16ImageAlpha > 0 && nodo16Img) {
+            drawNodoImage(16, nodo16Img, nodo16ImageAlpha);
+        }
+        
+        // Disegna i fili spiraleggianti
+        drawSpiralThreads();
+        
+        // Disegna il percorso principale
+        drawMainPath();
+        
+        // Disegna i nodi
+        drawNodes();
+        
+        // Disegna il cerchietto
+        drawMovingDot(currentPoint);
+        
+        // Disegna la descrizione del nodo 2 (se attiva)
+        drawNodo2Description();
+        
+        p.pop();
+        
+        // Se l'utente clicca sul nodo 2 e non abbiamo ancora creato le righe, creale
+        if (showDescriptionNodo2 && textLines.length === 0) {
+            createTextLines(nodes[1]);
+        }
+    };
+    
+    p.windowResized = function() {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
+        window.width = p.width;
+        window.height = p.height;
+        // Ricrea le stelle per il nuovo dimensionamento
+        initStarParticles();
+    };
+};
+
+// ============ INIZIALIZZAZIONE ============
+// Inizializza p5
+new p5(sketch);
