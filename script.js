@@ -53,14 +53,10 @@ let movementState = 'STOPPED'; // 'STOPPED', 'MOVING_TO_NODE'
 let targetNodeIndex = 0;
 const MOVEMENT_SPEED = 0.15; // Velocità normale fissa
 
-// Variabili per le immagini dei nodi
-let nodo1Img, nodo8Img, nodo16Img; // Immagini per i nodi 1, 9 e 17
-let showNodo1Image = false;
-let showNodo8Image = false;
-let showNodo16Image = false;
-let nodo1ImageAlpha = 0;
-let nodo8ImageAlpha = 0;
-let nodo16ImageAlpha = 0;
+// Variabili per le immagini di tutti i nodi
+let nodoImages = {}; // Oggetto per tutte le immagini
+let showNodoImages = {}; // Oggetto per controllare quali immagini mostrare
+let nodoImageAlphas = {}; // Oggetto per le alphas di ogni immagine
 const NODO_IMAGE_TARGET_ALPHA = 200;
 const NODO_IMAGE_FADE_SPEED = 5;
 
@@ -68,23 +64,155 @@ const NODO_IMAGE_FADE_SPEED = 5;
 const NODO_IMAGE_SETTINGS = {
     // Nodo 1 (indice 1)
     1: {
-        offsetX: -9800, // Spostamento orizzontale (negativo = sinistra)
-        offsetY: -4000,  // Spostamento verticale (negativo = sopra)
-        scale: 8        // Fattore di scala
+        offsetX: -9800,
+        offsetY: -4000,
+        scale: 8
     },
-    // Nodo 9 (indice 8)
+    // Nodo 2 (indice 2)
+    2: {
+        offsetX: -5000,
+        offsetY: -3000,
+        scale: 6
+    },
+    // Nodo 3 (indice 3)
+    3: {
+        offsetX: -4000,
+        offsetY: -2000,
+        scale: 6
+    },
+    // Nodo 4 (indice 4)
+    4: {
+        offsetX: -3000,
+        offsetY: -1500,
+        scale: 5
+    },
+    // Nodo 5 (indice 5)
+    5: {
+        offsetX: -2000,
+        offsetY: -1000,
+        scale: 5
+    },
+    // Nodo 6 (indice 6)
+    6: {
+        offsetX: -1500,
+        offsetY: -800,
+        scale: 4.5
+    },
+    // Nodo 7 (indice 7)
+    7: {
+        offsetX: -1200,
+        offsetY: -600,
+        scale: 4.5
+    },
+    // Nodo 8 (indice 8)
     8: {
-        offsetX: -3500, // Spostamento ancora più a sinistra
-        offsetY: 500,  // Spostamento verticale
-        scale: 8        // Fattore di scala
+        offsetX: -3500,
+        offsetY: 500,
+        scale: 8
     },
-    // Nodo 17 (indice 16)
+    // Nodo 9 (indice 9)
+    9: {
+        offsetX: -1000,
+        offsetY: -400,
+        scale: 4
+    },
+    // Nodo 10 (indice 10)
+    10: {
+        offsetX: -800,
+        offsetY: -300,
+        scale: 4
+    },
+    // Nodo 11 (indice 11)
+    11: {
+        offsetX: -600,
+        offsetY: -200,
+        scale: 3.5
+    },
+    // Nodo 12 (indice 12)
+    12: {
+        offsetX: -400,
+        offsetY: -150,
+        scale: 3.5
+    },
+    // Nodo 13 (indice 13)
+    13: {
+        offsetX: -300,
+        offsetY: -100,
+        scale: 3
+    },
+    // Nodo 14 (indice 14)
+    14: {
+        offsetX: -200,
+        offsetY: -80,
+        scale: 3
+    },
+    // Nodo 15 (indice 15)
+    15: {
+        offsetX: -150,
+        offsetY: -60,
+        scale: 2.5
+    },
+    // Nodo 16 (indice 16)
     16: {
-        offsetX: 1000, // Spostamento orizzontale
-        offsetY: -450,  // Spostamento verticale
-        scale: 8        // Fattore di scala
+        offsetX: 1000,
+        offsetY: -450,
+        scale: 8
+    },
+    // Nodo 17 (indice 17)
+    17: {
+        offsetX: 1500,
+        offsetY: -300,
+        scale: 2.5
+    },
+    // Nodo 18 (indice 18)
+    18: {
+        offsetX: 1800,
+        offsetY: -200,
+        scale: 2.5
+    },
+    // Nodo 19 (indice 19)
+    19: {
+        offsetX: 2000,
+        offsetY: -150,
+        scale: 2
+    },
+    // Nodo 20 (indice 20)
+    20: {
+        offsetX: 2200,
+        offsetY: -100,
+        scale: 2
+    },
+    // Nodo 21 (indice 21)
+    21: {
+        offsetX: 2400,
+        offsetY: -80,
+        scale: 1.8
+    },
+    // Nodo 22 (indice 22)
+    22: {
+        offsetX: 2600,
+        offsetY: -60,
+        scale: 1.8
+    },
+    // Nodo 23 (indice 23)
+    23: {
+        offsetX: 2800,
+        offsetY: -40,
+        scale: 1.5
+    },
+    // Nodo 24 (indice 24)
+    24: {
+        offsetX: 3000,
+        offsetY: -20,
+        scale: 1.5
     }
 };
+
+// Inizializza gli oggetti per le immagini
+for (let i = 1; i <= 24; i++) {
+    showNodoImages[i] = false;
+    nodoImageAlphas[i] = 0;
+}
 
 // Particelle per effetto stellato (sostituiscono gli sfondi)
 let starParticles = [];
@@ -231,26 +359,15 @@ function startMovingToNextNode() {
         
         movementState = 'MOVING_TO_NODE';
         
-        // Controlla se ci stiamo avvicinando ai nodi con immagini
-        if (targetNodeIndex === 1) {
-            showNodo1Image = true;
-            showNodo8Image = false;
-            showNodo16Image = false;
-        } else if (targetNodeIndex === 8) {
-            showNodo1Image = false;
-            showNodo8Image = true;
-            showNodo16Image = false;
-        } else if (targetNodeIndex === 16) {
-            showNodo1Image = false;
-            showNodo8Image = false;
-            showNodo16Image = true;
-        } else {
-            showNodo1Image = false;
-            showNodo8Image = false;
-            showNodo16Image = false;
-            nodo1ImageAlpha = 0;
-            nodo8ImageAlpha = 0;
-            nodo16ImageAlpha = 0;
+        // Resetta tutte le immagini
+        for (let i = 1; i <= 24; i++) {
+            showNodoImages[i] = false;
+            nodoImageAlphas[i] = 0;
+        }
+        
+        // Attiva l'immagine per il nodo target (se ha un'immagine)
+        if (targetNodeIndex >= 1 && targetNodeIndex <= 24) {
+            showNodoImages[targetNodeIndex] = true;
         }
     }
 }
@@ -264,18 +381,12 @@ function updateMovement() {
         const distanceToTarget = Math.abs(targetT - scrollProgress);
         
         // Controllo per le immagini dei nodi
-        if (targetNodeIndex === 1 && showNodo1Image) {
-            // Quando siamo abbastanza vicini al nodo, inizia la dissolvenza
+        if (targetNodeIndex >= 1 && targetNodeIndex <= 24 && showNodoImages[targetNodeIndex]) {
             if (distanceToTarget < 0.008) {
-                nodo1ImageAlpha = Math.min(nodo1ImageAlpha + NODO_IMAGE_FADE_SPEED, NODO_IMAGE_TARGET_ALPHA);
-            }
-        } else if (targetNodeIndex === 8 && showNodo8Image) {
-            if (distanceToTarget < 0.008) {
-                nodo8ImageAlpha = Math.min(nodo8ImageAlpha + NODO_IMAGE_FADE_SPEED, NODO_IMAGE_TARGET_ALPHA);
-            }
-        } else if (targetNodeIndex === 16 && showNodo16Image) {
-            if (distanceToTarget < 0.008) {
-                nodo16ImageAlpha = Math.min(nodo16ImageAlpha + NODO_IMAGE_FADE_SPEED, NODO_IMAGE_TARGET_ALPHA);
+                nodoImageAlphas[targetNodeIndex] = Math.min(
+                    nodoImageAlphas[targetNodeIndex] + NODO_IMAGE_FADE_SPEED, 
+                    NODO_IMAGE_TARGET_ALPHA
+                );
             }
         }
         
@@ -292,20 +403,14 @@ function updateMovement() {
             }
             
             // Mantieni l'immagine visibile quando arriviamo al nodo
-            if (currentNodeIndex === 1) {
-                nodo1ImageAlpha = NODO_IMAGE_TARGET_ALPHA;
-            } else if (currentNodeIndex === 8) {
-                nodo8ImageAlpha = NODO_IMAGE_TARGET_ALPHA;
-            } else if (currentNodeIndex === 16) {
-                nodo16ImageAlpha = NODO_IMAGE_TARGET_ALPHA;
+            if (currentNodeIndex >= 1 && currentNodeIndex <= 24) {
+                nodoImageAlphas[currentNodeIndex] = NODO_IMAGE_TARGET_ALPHA;
             } else {
-                // Nascondi tutte le immagini
-                showNodo1Image = false;
-                showNodo8Image = false;
-                showNodo16Image = false;
-                nodo1ImageAlpha = 0;
-                nodo8ImageAlpha = 0;
-                nodo16ImageAlpha = 0;
+                // Nascondi tutte le immagini se non siamo su un nodo con immagine
+                for (let i = 1; i <= 24; i++) {
+                    showNodoImages[i] = false;
+                    nodoImageAlphas[i] = 0;
+                }
             }
         }
     }
@@ -718,26 +823,6 @@ function drawNodo2Description() {
                 currentCharX += spacing + spacingWave;
             }
             
-            // LINEA GUIDA VISIVA (opzionale, per debugging)
-            if (false) {
-                p.push();
-                p.translate(-startX, 0);
-                p.noFill();
-                p.stroke(255, 100, 100, descriptionAlpha * 0.3);
-                p.strokeWeight(2);
-                
-                // Disegna curva guida
-                p.beginShape();
-                for (let i = 0; i <= 10; i++) {
-                    const t = i / 10;
-                    const guideX = p.lerp(-50, 50, t);
-                    const guideY = p.sin(t * Math.PI * 2) * 30;
-                    p.vertex(guideX, guideY);
-                }
-                p.endShape();
-                p.pop();
-            }
-            
             p.pop();
         });
     });
@@ -1033,19 +1118,10 @@ function drawNodo2Description() {
     window.height = p.height;
     
     p.preload = function() {
-        // Carica le immagini per i nodi
-        nodo1Img = p.loadImage('assets/nodo_1.png');
-        nodo8Img = p.loadImage('assets/nodo_8.png');
-        nodo15Img = p.loadImage('assets/nodo_15.png');
-        nodo16Img = p.loadImage('assets/nodo_16.png');
-        nodo17Img = p.loadImage('assets/nodo_17.png');
-        nodo18mg = p.loadImage('assets/nodo_18.png');
-        nodo19Img = p.loadImage('assets/nodo_19.png');
-        nodo20Img = p.loadImage('assets/nodo_20.png');
-        nodo21Img = p.loadImage('assets/nodo_21.png');
-        nodo22mg = p.loadImage('assets/nodo_22.png');
-        nodo23Img = p.loadImage('assets/nodo_23.png');
-        nodo24Img = p.loadImage('assets/nodo_24.png');
+        // Carica tutte le immagini per i nodi
+        for (let i = 1; i <= 24; i++) {
+            nodoImages[i] = p.loadImage('assets/nodo_' + i + '.png');
+        }
     };
     
     p.setup = function() {
@@ -1100,16 +1176,10 @@ function drawNodo2Description() {
         p.translate(-currentPoint.x, -currentPoint.y);
         
         // DISEGNA PRIMA LE IMMAGINI (COSÌ STANNO DIETRO AL FILO)
-        if (showNodo1Image && nodo1ImageAlpha > 0 && nodo1Img) {
-            drawNodoImage(1, nodo1Img, nodo1ImageAlpha);
-        }
-        
-        if (showNodo8Image && nodo8ImageAlpha > 0 && nodo8Img) {
-            drawNodoImage(8, nodo8Img, nodo8ImageAlpha);
-        }
-        
-        if (showNodo16Image && nodo16ImageAlpha > 0 && nodo16Img) {
-            drawNodoImage(16, nodo16Img, nodo16ImageAlpha);
+        for (let i = 1; i <= 24; i++) {
+            if (showNodoImages[i] && nodoImageAlphas[i] > 0 && nodoImages[i]) {
+                drawNodoImage(i, nodoImages[i], nodoImageAlphas[i]);
+            }
         }
         
         // Disegna i fili spiraleggianti
