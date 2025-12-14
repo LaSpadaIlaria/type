@@ -33,9 +33,9 @@ const originalPoints = [
     {x: 30265, y: 21613},
     {x: 35121, y: 25044},
     {x: 35833, y: 29619},
-    {x: 33654, y: 35308},
-    {x: 14492, y: 29676},
-    {x: 2784, y: 32222}
+    {x: 33654, y: 35433},
+    {x: 11226, y: 35433},
+    {x: 11226, y: 45694}
 ];
 
 // ============ VARIABILI GLOBALI ============
@@ -44,192 +44,73 @@ let pathPoints = [];
 let smoothPath = [];
 let pathLength = 0;
 
-// Sistema di nodi
+// Sistema di nodi - 26 NODI
 let nodes = [];
 let currentNodeIndex = 0;
 
 // Sistema di movimento
 let movementState = 'STOPPED'; // 'STOPPED', 'MOVING_TO_NODE'
 let targetNodeIndex = 0;
-const MOVEMENT_SPEED = 0.15; // Velocità normale fissa
+const MOVEMENT_SPEED = 0.15;
 
-// Variabili per le immagini di tutti i nodi
-let nodoImages = {}; // Oggetto per tutte le immagini
-let showNodoImages = {}; // Oggetto per controllare quali immagini mostrare
-let nodoImageAlphas = {}; // Oggetto per le alphas di ogni immagine
+// Variabili per le immagini dei nodi
+let nodoImages = {};
+let showNodoImages = {};
+let nodoImageAlphas = {};
 const NODO_IMAGE_TARGET_ALPHA = 200;
 const NODO_IMAGE_FADE_SPEED = 5;
 
-// Impostazioni per le immagini
+// Impostazioni per le immagini (26 nodi) //sotto positivo. destra positivo
 const NODO_IMAGE_SETTINGS = {
-    // Nodo 1 (indice 1)
-    1: {
-        offsetX: -10000,
-        offsetY: 1000,
-        scale: 8
-    },
-    // Nodo 2 (indice 2)
-    2: {
-        offsetX: 800,
-        offsetY: -6000,
-        scale: 10
-    },
-    // Nodo 3 (indice 3)
-    3: {
-        offsetX: -4000,
-        offsetY: -6000,
-        scale: 10
-    },
-    // Nodo 4 (indice 4)
-    4: {
-        offsetX: -8000,
-        offsetY: -1500,
-        scale: 9
-    },
-    // Nodo 5 (indice 5)
-    5: {
-        offsetX: -8000,
-        offsetY: -1000,
-        scale: 10
-    },
-    // Nodo 6 (indice 6)
-    6: {
-        offsetX: 1000, //sinistra negativo
-        offsetY: -5000,
-        scale: 6.5
-    },
-    // Nodo 7 (indice 7)
-    7: {
-        offsetX: -1200,
-        offsetY: -6000, //sopra negativo
-        scale: 10
-    },
-    // Nodo 8 (indice 8)
-    8: {
-        offsetX: -3500,
-        offsetY: 2000,
-        scale: 8
-    },
-    // Nodo 9 (indice 9)
-    9: {
-        offsetX: -400,
-        offsetY: -6000,
-        scale: 9
-    },
-    // Nodo 10 (indice 10)
-    10: {
-        offsetX: -800,
-        offsetY: -300,
-        scale: 4
-    },
-    // Nodo 11 (indice 11)
-    11: {
-        offsetX: -600,
-        offsetY: -200,
-        scale: 3.5
-    },
-    // Nodo 12 (indice 12)
-    12: {
-        offsetX: -400,
-        offsetY: -150,
-        scale: 3.5
-    },
-    // Nodo 13 (indice 13)
-    13: {
-        offsetX: -300,
-        offsetY: -100,
-        scale: 3
-    },
-    // Nodo 14 (indice 14)
-    14: {
-        offsetX: -200,
-        offsetY: -80,
-        scale: 3
-    },
-    // Nodo 15 (indice 15)
-    15: {
-        offsetX: -150,
-        offsetY: -60,
-        scale: 2.5
-    },
-    // Nodo 16 (indice 16)
-    16: {
-        offsetX: 1000,
-        offsetY: -450,
-        scale: 8
-    },
-    // Nodo 17 (indice 17)
-    17: {
-        offsetX: 1500,
-        offsetY: -300,
-        scale: 2.5
-    },
-    // Nodo 18 (indice 18)
-    18: {
-        offsetX: 1800,
-        offsetY: -200,
-        scale: 2.5
-    },
-    // Nodo 19 (indice 19)
-    19: {
-        offsetX: 2000,
-        offsetY: -150,
-        scale: 2
-    },
-    // Nodo 20 (indice 20)
-    20: {
-        offsetX: 2200,
-        offsetY: -100,
-        scale: 2
-    },
-    // Nodo 21 (indice 21)
-    21: {
-        offsetX: 2400,
-        offsetY: -80,
-        scale: 1.8
-    },
-    // Nodo 22 (indice 22)
-    22: {
-        offsetX: 2600,
-        offsetY: -60,
-        scale: 1.8
-    },
-    // Nodo 23 (indice 23)
-    23: {
-        offsetX: 2800,
-        offsetY: -40,
-        scale: 1.5
-    },
-    // Nodo 24 (indice 24)
-    24: {
-        offsetX: 3000,
-        offsetY: -20,
-        scale: 1.5
-    }
+    1: { offsetX: -10000, offsetY: 1000, scale: 8 },
+    2: { offsetX: -800, offsetY: -200, scale: 10 },
+    3: { offsetX: -12000, offsetY: -6000, scale: 10 },
+    4: { offsetX: -4000, offsetY: 1500, scale: 9 },
+    5: { offsetX: -8000, offsetY: -1000, scale: 10 },
+    6: { offsetX: 1000, offsetY: -5000, scale: 6.5 },
+    7: { offsetX: -3200, offsetY: -6500, scale: 10 },//forse b
+    8: { offsetX: 1000, offsetY: -2000, scale: 8 }, 
+    9: { offsetX: -3000, offsetY: 2000, scale: 9 }, 
+    10: { offsetX: -3000, offsetY: -6300, scale: 8 },
+    11: { offsetX: -2500, offsetY: -7000, scale: 8 },
+    12: { offsetX: -5500, offsetY: -7500, scale: 9 },
+    13: { offsetX: 2000, offsetY: -3000, scale: 8 },
+    14: { offsetX: -3000, offsetY: 1000, scale: 11 },
+    15: { offsetX: -2500, offsetY: 1400, scale: 7 },
+    16: { offsetX: 1000, offsetY: -2000, scale: 7 },
+    17: { offsetX: 1500, offsetY: -1000, scale: 10 },
+    18: { offsetX: -2000, offsetY: -6000, scale: 10 },
+    19: { offsetX: 2000, offsetY: -3550, scale: 12 },
+    20: { offsetX: -3200, offsetY: -6000, scale: 8 },
+    21: { offsetX: -2400, offsetY: -7000, scale: 7 },
+    22: { offsetX: -2600, offsetY: -7000, scale: 7 },
+    23: { offsetX: -2000, offsetY: -5000, scale: 8 },
+    24: { offsetX: 2000, offsetY: -2000, scale: 11 }, //    questa è la P
+    
 };
 
-// Inizializza gli oggetti per le immagini
-for (let i = 1; i <= 24; i++) {
+// Inizializza per 26 nodi
+for (let i = 1; i <= 26; i++) {
     showNodoImages[i] = false;
     nodoImageAlphas[i] = 0;
 }
 
-// Particelle per effetto stellato (sostituiscono gli sfondi)
+// Particelle per effetto stellato
 let starParticles = [];
 const STAR_COUNT = 100;
 
-// --- DESCRIZIONE NODO 2 (PAROLE FUTURISTE) ---
+// Descrizione Nodo 2
 let showDescriptionNodo2 = false;
 let textLines = [];
 let descriptionAlpha = 0;
 const DESCRIPTION_FADE_SPEED = 8;
 
-// --- DESCRIZIONE NODO 3 (NUOVA DESCRIZIONE) ---
+// Descrizione Nodo 3
 let showDescriptionNodo3 = false;
 let textLinesNodo3 = [];
 let descriptionAlphaNodo3 = 0;
 
-// Testo del nodo 2
+// Testi
 const nodo3Text = `QuaLCosa si Avvolge… una CURVA che danza… 
 ritmO… raPIdiTà…
 LE grAzie conDuconO alla lettera, 
@@ -246,7 +127,6 @@ SLASH!
 Un taglio.  
 E pOI… riNasCita.`;
 
-// Testo del nodo 2 (identico al nodo 2, ma puoi modificarlo)
 const nodo2Text = `QuaLCosa si Avvolge… una CURVA che danza… 
 ritmO… raPIdiTà… LE grAzie conDuconO alla lettera, 
 la CREAno, la fanno naSCerE: Scende la priMa astE. 
@@ -257,16 +137,14 @@ un'altra asta … SLASH!
 Un taglio.  
 E pOI… riNasCita.`;
 
-// ============ NUOVE VARIABILI PER ANIMAZIONE TESTO ============
+// Variabili per animazione testo
 let descriptionStartTime = 0;
 let wordEntryStates = {};
 let wordEntryStatesNodo3 = {};
 
-// 1. SPOSTAMENTI SEPARATI PER I DUE NODI:
-const TEXT_OFFSET_X_NODO2 = -20000;   // Nodo 2 rimane a destra (valore originale)
-const TEXT_OFFSET_X_NODO3 = 22000;  // Nodo 3 spostato molto a sinistra
-
-// 2. DIMENSIONE CARATTERI AUMENTATA CON SPAZIATURA ADATTATA
+// Spostamenti testo
+const TEXT_OFFSET_X_NODO2 = -20000;
+const TEXT_OFFSET_X_NODO3 = 22000;
 const BASE_TEXT_SIZE = 780;
 
 // ============ FUNZIONI UTILITY MATEMATICHE ============
@@ -361,10 +239,10 @@ function getPointOnPath(t, points, totalLength) {
     return points[points.length - 1];
 }
 
-// Calcola 24 nodi equidistanti
+// Calcola 26 nodi equidistanti
 function calculateNodes() {
     nodes = [];
-    const numNodes = 24;
+    const numNodes = 26;
     
     for (let i = 0; i < numNodes; i++) {
         const t = i / (numNodes - 1);
@@ -387,22 +265,21 @@ function calculateNodes() {
 // Sistema di movimento tra nodi
 function startMovingToNextNode() {
     if (movementState === 'STOPPED') {
-        // Determina il prossimo nodo
         targetNodeIndex = currentNodeIndex + 1;
         if (targetNodeIndex >= nodes.length) {
-            targetNodeIndex = 0; // Torna all'inizio
+            targetNodeIndex = 0;
         }
         
         movementState = 'MOVING_TO_NODE';
         
         // Resetta tutte le immagini
-        for (let i = 1; i <= 24; i++) {
+        for (let i = 1; i <= 26; i++) {
             showNodoImages[i] = false;
             nodoImageAlphas[i] = 0;
         }
         
         // Attiva l'immagine per il nodo target (se ha un'immagine)
-        if (targetNodeIndex >= 1 && targetNodeIndex <= 24) {
+        if (targetNodeIndex >= 1 && targetNodeIndex <= 26) {
             showNodoImages[targetNodeIndex] = true;
         }
     }
@@ -410,14 +287,11 @@ function startMovingToNextNode() {
 
 function updateMovement() {
     if (movementState === 'MOVING_TO_NODE') {
-        // Calcola il target progress (posizione del nodo target)
         const targetT = nodes[targetNodeIndex].t;
-        
-        // Calcola la distanza dal target
         const distanceToTarget = Math.abs(targetT - scrollProgress);
         
         // Controllo per le immagini dei nodi
-        if (targetNodeIndex >= 1 && targetNodeIndex <= 24 && showNodoImages[targetNodeIndex]) {
+        if (targetNodeIndex >= 1 && targetNodeIndex <= 26 && showNodoImages[targetNodeIndex]) {
             if (distanceToTarget < 0.008) {
                 nodoImageAlphas[targetNodeIndex] = Math.min(
                     nodoImageAlphas[targetNodeIndex] + NODO_IMAGE_FADE_SPEED, 
@@ -434,16 +308,17 @@ function updateMovement() {
             scrollProgress = targetT;
             currentNodeIndex = targetNodeIndex;
             movementState = 'STOPPED';
+            
             if (document.getElementById('current-node')) {
                 document.getElementById('current-node').textContent = (currentNodeIndex + 1);
             }
             
             // Mantieni l'immagine visibile quando arriviamo al nodo
-            if (currentNodeIndex >= 1 && currentNodeIndex <= 24) {
+            if (currentNodeIndex >= 1 && currentNodeIndex <= 26) {
                 nodoImageAlphas[currentNodeIndex] = NODO_IMAGE_TARGET_ALPHA;
             } else {
-                // Nascondi tutte le immagini se non siamo su un nodo con immagine
-                for (let i = 1; i <= 24; i++) {
+                // Nascondi tutte le immagini
+                for (let i = 1; i <= 26; i++) {
                     showNodoImages[i] = false;
                     nodoImageAlphas[i] = 0;
                 }
@@ -463,17 +338,15 @@ function distance(x1, y1, x2, y2) {
 function setupScrollListeners(canvasElement) {
     let isProcessing = false;
     
-    // Listener per wheel (rotellina mouse) - SOLO QUESTO MUOVE IL PALLINO
+    // Listener per wheel
     window.addEventListener('wheel', function(e) {
         if (isProcessing) return;
         
-        // Solo scroll verso il basso o verso l'alto
         if (Math.abs(e.deltaY) > 5 || Math.abs(e.deltaX) > 5) {
             if (movementState === 'STOPPED') {
                 isProcessing = true;
                 startMovingToNextNode();
                 
-                // Evita input multipli troppo ravvicinati
                 setTimeout(() => {
                     isProcessing = false;
                 }, 300);
@@ -481,9 +354,8 @@ function setupScrollListeners(canvasElement) {
         }
     });
     
-    // Listener per tastiera - SOLO QUESTO MUOVE IL PALLINO
+    // Listener per tastiera
     window.addEventListener('keydown', function(e) {
-        // Space, ArrowDown, ArrowRight
         if (['Space', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.code)) {
             e.preventDefault();
             if (movementState === 'STOPPED' && !isProcessing) {
@@ -497,7 +369,7 @@ function setupScrollListeners(canvasElement) {
         }
     });
 
-    // Listener per click sul canvas - SOLO PER INTERAZIONE CON NODI, NON MUOVE IL PALLINO
+    // Listener per click sul canvas
     if (canvasElement) {
         canvasElement.addEventListener('click', handleCanvasClick);
         canvasElement.style.cursor = 'pointer';
@@ -525,7 +397,7 @@ function setupScrollListeners(canvasElement) {
         // Tolleranza per cliccare i nodi
         if (distToNodo2 < 1500) {
             showDescriptionNodo2 = !showDescriptionNodo2;
-            showDescriptionNodo3 = false; // Disattiva l'altra descrizione
+            showDescriptionNodo3 = false;
             
             if (showDescriptionNodo2) {
                 window.createTextLinesRequestedNodo2 = true;
@@ -535,7 +407,7 @@ function setupScrollListeners(canvasElement) {
         
         if (distToNodo3 < 1500) {
             showDescriptionNodo3 = !showDescriptionNodo3;
-            showDescriptionNodo2 = false; // Disattiva l'altra descrizione
+            showDescriptionNodo2 = false;
             
             if (showDescriptionNodo3) {
                 window.createTextLinesRequestedNodo3 = true;
@@ -547,7 +419,6 @@ function setupScrollListeners(canvasElement) {
 
 // ============ SKETCH P5 ============
 const sketch = (p) => {
-    // Variabili locali a p5
     let canvas;
     let starParticles = [];
     
@@ -560,6 +431,30 @@ const sketch = (p) => {
     let localTextLinesNodo3 = [];
     let localWordEntryStatesNodo3 = {};
     let localDescriptionStartTimeNodo3 = 0;
+    
+    // Funzione per caricare immagini in modo sicuro
+    function loadImageSafely(path, placeholderText) {
+        return new Promise((resolve) => {
+            const img = p.loadImage(
+                path,
+                (loadedImg) => {
+                    console.log(`✅ Immagine caricata: ${path}`);
+                    resolve(loadedImg);
+                },
+                (err) => {
+                    console.log(`⚠️ Immagine non trovata: ${path}, creo placeholder`);
+                    // Crea un'immagine placeholder
+                    const placeholder = p.createGraphics(200, 200);
+                    placeholder.background(50, 50, 100, 100);
+                    placeholder.fill(200, 200, 255);
+                    placeholder.textSize(24);
+                    placeholder.textAlign(p.CENTER, p.CENTER);
+                    placeholder.text(placeholderText, 100, 100);
+                    resolve(placeholder);
+                }
+            );
+        });
+    }
     
     // Funzione generica per creare le righe di testo
     function createTextLinesGeneric(node, textContent, offsetX) {
@@ -589,9 +484,8 @@ const sketch = (p) => {
             const words = trimmedLine.split(/\s+/);
             const wordsInLine = [];
             
-            // AUMENTO SPAZIATURA PER LETTERE GRANDI
-            const estimatedCharWidth = 450;  // Aumentato da 180
-            const wordSpacing = 750;         // Aumentato da 200
+            const estimatedCharWidth = 450;
+            const wordSpacing = 750;
             
             let totalLineWidth = 0;
             words.forEach(word => {
@@ -599,9 +493,7 @@ const sketch = (p) => {
             });
             totalLineWidth -= wordSpacing;
             
-            // POSIZIONE INIZIALE CON OFFSET A SINISTRA
             let currentX = (node.x + offsetX) - totalLineWidth / 2;
-            
             const baseLineY = startY + lineIndex * lineHeight;
             const wave = lineWaves[lineIndex];
             
@@ -635,7 +527,6 @@ const sketch = (p) => {
                 
                 const wordId = `${lineIndex}-${wordIndex}`;
                 
-                // PARAMETRI DI ENTRATA FLUIDA
                 wordEntryStates[wordId] = {
                     entered: false,
                     startTime: 0,
@@ -686,8 +577,7 @@ const sketch = (p) => {
                     hasEntered: false
                 };
                 
-                // SPAZIATURA AUMENTATA PER LETTERE GRANDI
-                const baseCharSpacing = 350;  // Aumentato da 180
+                const baseCharSpacing = 350;
                 
                 for (let i = 0; i < word.length; i++) {
                     const charT = i / (word.length - 1 || 1);
@@ -698,7 +588,7 @@ const sketch = (p) => {
                         wave.angle * 0.3 + charWave + p.random(-0.1, 0.1)
                     );
                     
-                    const spacingVariation = isSpecialWord ? 120 : 80;  // Aumentato
+                    const spacingVariation = isSpecialWord ? 120 : 80;
                     const spacingPattern = p.sin(charT * Math.PI * 2) * spacingVariation * 0.3;
                     
                     wordObj.charSpacings.push(
@@ -720,7 +610,6 @@ const sketch = (p) => {
     }
     
     function createTextLinesNodo2(node) {
-        // Usa l'offset per nodo 2 (più a destra)
         const result = createTextLinesGeneric(node, nodo2Text, TEXT_OFFSET_X_NODO2);
         localTextLines = result.textLines;
         localWordEntryStates = result.wordEntryStates;
@@ -728,7 +617,6 @@ const sketch = (p) => {
     }
     
     function createTextLinesNodo3(node) {
-        // Usa l'offset per nodo 3 (molto più a sinistra)
         const result = createTextLinesGeneric(node, nodo3Text, TEXT_OFFSET_X_NODO3);
         localTextLinesNodo3 = result.textLines;
         localWordEntryStatesNodo3 = result.wordEntryStates;
@@ -739,7 +627,6 @@ const sketch = (p) => {
     function drawDescriptionGeneric(textLines, wordEntryStates, descriptionStartTime, showDescription, descriptionAlphaVar) {
         if (!showDescription && descriptionAlphaVar <= 0) return descriptionAlphaVar;
         
-        // Gestione alpha
         if (showDescription) {
             descriptionAlphaVar = 255;
         } else {
@@ -766,14 +653,12 @@ const sketch = (p) => {
                 
                 p.push();
                 
-                // Calcola progresso entrata
                 let entryProgress = 0;
                 if (wordState.entered) {
                     const entryElapsed = currentTime - wordState.startTime;
                     entryProgress = Math.min(entryElapsed / wordState.entryDuration, 1);
                 }
                 
-                // FUNZIONE DI EASING FLUIDA
                 let easedProgress = 0;
                 if (entryProgress > 0) {
                     if (entryProgress < 0.2) {
@@ -867,7 +752,6 @@ const sketch = (p) => {
                 
                 p.rotate(wordRotation);
                 
-                // 3. DIMENSIONE CARATTERI AUMENTATA
                 const baseTextSize = BASE_TEXT_SIZE;
                 let sizeVariation = 0;
                 
@@ -995,13 +879,12 @@ const sketch = (p) => {
         }
     }
     
-    // Aggiungi funzione smoothstep per transizioni più fluide
+    // Aggiungi funzione smoothstep
     p.smoothstep = function(edge0, edge1, x) {
         x = p.constrain((x - edge0) / (edge1 - edge0), 0.0, 1.0);
         return x * x * (3.0 - 2.0 * x);
     };
     
-    // Resto delle funzioni p5...
     function initStarParticles() {
         starParticles = [];
         for (let i = 0; i < STAR_COUNT; i++) {
@@ -1193,25 +1076,34 @@ const sketch = (p) => {
     }
     
     function drawNodoImage(nodeIndex, img, alpha) {
-        if (nodes.length > nodeIndex && img) {
-            const node = nodes[nodeIndex];
-            const settings = NODO_IMAGE_SETTINGS[nodeIndex];
-            
-            if (!settings) return;
-            
-            p.push();
-            
+        // Controllo sicuro per evitare errori
+        if (!nodes || nodes.length <= nodeIndex) return;
+        if (!img || alpha <= 0) return;
+        
+        const node = nodes[nodeIndex];
+        if (!node) return;
+        
+        const settings = NODO_IMAGE_SETTINGS[nodeIndex];
+        if (!settings) return;
+        
+        // Controlla se img è valida
+        if (!img.width || !img.height) return;
+        
+        p.push();
+        
+        try {
             const imageX = node.x + settings.offsetX;
             const imageY = node.y + settings.offsetY;
-            
             const desiredWidth = img.width * settings.scale;
             const desiredHeight = img.height * settings.scale;
             
             p.tint(255, alpha);
             p.image(img, imageX, imageY, desiredWidth, desiredHeight);
-            
-            p.pop();
+        } catch (e) {
+            console.warn("Errore nel disegno dell'immagine del nodo", nodeIndex, e);
         }
+        
+        p.pop();
     }
     
     function drawMovingDot(currentPoint) {
@@ -1261,15 +1153,43 @@ const sketch = (p) => {
         }
     }
     
-    p.preload = function() {
-        // Carica tutte le immagini per i nodi
-        for (let i = 1; i <= 24; i++) {
-            nodoImages[i] = p.loadImage('assets/nodo_' + i + '.png');
+    p.preload = async function() {
+        console.log("Caricamento immagini...");
+        
+        // Carica le immagini in modo asincrono e sicuro
+        for (let i = 1; i <= 26; i++) {
+            // Crea prima un placeholder
+            const placeholder = p.createGraphics(100, 100);
+            placeholder.background(50, 50, 100, 100);
+            placeholder.fill(200, 200, 255);
+            placeholder.textSize(14);
+            placeholder.textAlign(p.CENTER, p.CENTER);
+            placeholder.text(`Nodo ${i}`, 50, 50);
+            nodoImages[i] = placeholder;
+            
+            // Prova a caricare l'immagine reale solo per i primi 24 nodi
+            if (i <= 24) {
+                try {
+                    const imgPath = 'assets/nodo_' + i + '.png';
+                    p.loadImage(imgPath, 
+                        (img) => {
+                            console.log(`✅ Immagine caricata: nodo_${i}.png`);
+                            nodoImages[i] = img;
+                        },
+                        (err) => {
+                            console.log(`⚠️ Immagine non trovata: nodo_${i}.png, uso placeholder`);
+                            // Mantieni il placeholder già creato
+                        }
+                    );
+                } catch (e) {
+                    console.warn(`Errore nel caricamento di nodo_${i}.png:`, e);
+                }
+            }
         }
     };
     
     p.setup = function() {
-        console.log("Setup p5.js");
+        console.log("Setup p5.js - 26 nodi");
         canvas = p.createCanvas(p.windowWidth, p.windowHeight);
         canvas.parent('p5-canvas');
         
@@ -1297,12 +1217,7 @@ const sketch = (p) => {
             nodeElement.textContent = (currentNodeIndex + 1);
         }
         
-        console.log("Setup completato");
-        console.log("Nodo 2:", nodes[1]);
-        console.log("Nodo 3:", nodes[2]);
-        console.log("TEXT_OFFSET_X_NODO2:", TEXT_OFFSET_X_NODO2);
-        console.log("TEXT_OFFSET_X_NODO3:", TEXT_OFFSET_X_NODO3);
-        console.log("BASE_TEXT_SIZE:", BASE_TEXT_SIZE);
+        console.log("Setup completato con", nodes.length, "nodi");
     };
     
     p.draw = function() {
@@ -1323,8 +1238,8 @@ const sketch = (p) => {
         p.scale(zoom);
         p.translate(-currentPoint.x, -currentPoint.y);
         
-        // DISEGNA PRIMA LE IMMAGINI (COSÌ STANNO DIETRO AL FILO)
-        for (let i = 1; i <= 24; i++) {
+        // Disegna immagini dei nodi
+        for (let i = 1; i <= 26; i++) {
             if (showNodoImages[i] && nodoImageAlphas[i] > 0 && nodoImages[i]) {
                 drawNodoImage(i, nodoImages[i], nodoImageAlphas[i]);
             }
