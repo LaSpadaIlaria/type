@@ -86,7 +86,8 @@ const NODO_IMAGE_SETTINGS = {
     22: { offsetX: -2600, offsetY: -7000, scale: 7 },
     23: { offsetX: -2000, offsetY: -5000, scale: 8 },
     24: { offsetX: 2000, offsetY: -2000, scale: 11 }, //    questa è la P
-    
+    25: { offsetX: -2000, offsetY: -5000, scale: 8 },
+    26: { offsetX: 2000, offsetY: -2000, scale: 1.5 }
 };
 
 // Inizializza per 26 nodi
@@ -103,12 +104,23 @@ const STAR_COUNT = 100;
 let showDescriptionNodo2 = false;
 let textLines = [];
 let descriptionAlpha = 0;
-const DESCRIPTION_FADE_SPEED = 8;
 
 // Descrizione Nodo 3
 let showDescriptionNodo3 = false;
 let textLinesNodo3 = [];
 let descriptionAlphaNodo3 = 0;
+
+// Descrizione Nodo 13
+let showDescriptionNodo13 = false;
+let textLinesNodo13 = [];
+let descriptionAlphaNodo13 = 0;
+
+// Descrizione Nodo 21 - NUOVA
+let showDescriptionNodo21 = false;
+let textLinesNodo21 = [];
+let descriptionAlphaNodo21 = 0;
+
+const DESCRIPTION_FADE_SPEED = 8;
 
 // Testi
 const nodo3Text = `QuaLCosa si Avvolge… una CURVA che danza… 
@@ -137,6 +149,18 @@ un'altra asta … SLASH!
 Un taglio.  
 E pOI… riNasCita.`;
 
+// Testo per il nodo 13
+const nodo13Text = `Il testo per il nodo 13 va qui...
+Puoi scrivere quello che vuoi
+su più righe
+come preferisci`;
+
+// Testo per il nodo 21
+const nodo21Text = `Il testo per il nodo 21 va qui...
+Puoi scrivere quello che vuoi
+su più righe
+come preferisci`;
+
 // Variabili per animazione testo
 let descriptionStartTime = 0;
 let wordEntryStates = {};
@@ -145,7 +169,29 @@ let wordEntryStatesNodo3 = {};
 // Spostamenti testo
 const TEXT_OFFSET_X_NODO2 = -20000;
 const TEXT_OFFSET_X_NODO3 = 22000;
+const TEXT_OFFSET_X_NODO13 = 20000;
+const TEXT_OFFSET_X_NODO21 = -18000; // Offset per il nodo 21
 const BASE_TEXT_SIZE = 780;
+
+// Funzione per aggiornare l'indicatore del nodo
+function updateNodeIndicator() {
+    const nodeElement = document.getElementById('current-node');
+    if (!nodeElement) return;
+    
+    // Controlla se c'è una descrizione attiva
+    const hasActiveDescription = showDescriptionNodo2 || showDescriptionNodo3 || 
+                                showDescriptionNodo13 || showDescriptionNodo21;
+    
+    if (hasActiveDescription) {
+        nodeElement.textContent = "Clicca per chiudere la descrizione";
+        nodeElement.style.color = "#ffffff";
+        nodeElement.style.fontStyle = "italic";
+    } else {
+        nodeElement.textContent = `Nodo ${currentNodeIndex + 1}`;
+        nodeElement.style.color = "";
+        nodeElement.style.fontStyle = "";
+    }
+}
 
 // ============ FUNZIONI UTILITY MATEMATICHE ============
 function scalePoints(points, multiplier) {
@@ -309,9 +355,8 @@ function updateMovement() {
             currentNodeIndex = targetNodeIndex;
             movementState = 'STOPPED';
             
-            if (document.getElementById('current-node')) {
-                document.getElementById('current-node').textContent = (currentNodeIndex + 1);
-            }
+            // Aggiorna l'indicatore del nodo
+            updateNodeIndicator();
             
             // Mantieni l'immagine visibile quando arriviamo al nodo
             if (currentNodeIndex >= 1 && currentNodeIndex <= 26) {
@@ -394,10 +439,23 @@ function setupScrollListeners(canvasElement) {
         const nodo3 = nodes[2];
         const distToNodo3 = distance(worldX, worldY, nodo3.x, nodo3.y);
         
+        // Verifica se il click è sul nodo 13
+        const nodo13 = nodes[12];
+        const distToNodo13 = distance(worldX, worldY, nodo13.x, nodo13.y);
+        
+        // Verifica se il click è sul nodo 21
+        const nodo21 = nodes[20];
+        const distToNodo21 = distance(worldX, worldY, nodo21.x, nodo21.y);
+        
         // Tolleranza per cliccare i nodi
         if (distToNodo2 < 1500) {
             showDescriptionNodo2 = !showDescriptionNodo2;
             showDescriptionNodo3 = false;
+            showDescriptionNodo13 = false;
+            showDescriptionNodo21 = false;
+            
+            // Aggiorna l'indicatore
+            updateNodeIndicator();
             
             if (showDescriptionNodo2) {
                 window.createTextLinesRequestedNodo2 = true;
@@ -408,9 +466,44 @@ function setupScrollListeners(canvasElement) {
         if (distToNodo3 < 1500) {
             showDescriptionNodo3 = !showDescriptionNodo3;
             showDescriptionNodo2 = false;
+            showDescriptionNodo13 = false;
+            showDescriptionNodo21 = false;
+            
+            // Aggiorna l'indicatore
+            updateNodeIndicator();
             
             if (showDescriptionNodo3) {
                 window.createTextLinesRequestedNodo3 = true;
+            }
+            return;
+        }
+        
+        if (distToNodo13 < 1500) {
+            showDescriptionNodo13 = !showDescriptionNodo13;
+            showDescriptionNodo2 = false;
+            showDescriptionNodo3 = false;
+            showDescriptionNodo21 = false;
+            
+            // Aggiorna l'indicatore
+            updateNodeIndicator();
+            
+            if (showDescriptionNodo13) {
+                window.createTextLinesRequestedNodo13 = true;
+            }
+            return;
+        }
+        
+        if (distToNodo21 < 1500) {
+            showDescriptionNodo21 = !showDescriptionNodo21;
+            showDescriptionNodo2 = false;
+            showDescriptionNodo3 = false;
+            showDescriptionNodo13 = false;
+            
+            // Aggiorna l'indicatore
+            updateNodeIndicator();
+            
+            if (showDescriptionNodo21) {
+                window.createTextLinesRequestedNodo21 = true;
             }
             return;
         }
@@ -431,6 +524,12 @@ const sketch = (p) => {
     let localTextLinesNodo3 = [];
     let localWordEntryStatesNodo3 = {};
     let localDescriptionStartTimeNodo3 = 0;
+    
+    // Variabili locali per il testo del nodo 13
+    let localTextLinesNodo13 = [];
+    
+    // Variabili locali per il testo del nodo 21
+    let localTextLinesNodo21 = [];
     
     // Funzione per caricare immagini in modo sicuro
     function loadImageSafely(path, placeholderText) {
@@ -456,7 +555,7 @@ const sketch = (p) => {
         });
     }
     
-    // Funzione generica per creare le righe di testo
+    // Funzione generica per creare le righe di testo (per nodi 2 e 3)
     function createTextLinesGeneric(node, textContent, offsetX) {
         const textLines = [];
         const wordEntryStates = {};
@@ -623,7 +722,147 @@ const sketch = (p) => {
         localDescriptionStartTimeNodo3 = p.millis();
     }
     
-    // Funzione generica per disegnare la descrizione
+    // Funzione per creare le righe di testo per il nodo 13 (stile semplice)
+    function createTextLinesNodo13(node) {
+        localTextLinesNodo13 = [];
+        
+        const lines = nodo13Text.split('\n');
+        const lineHeight = 800;
+        const startY = node.y - ((lines.length - 1) * lineHeight) / 2;
+        
+        lines.forEach((line, index) => {
+            const trimmedLine = line.trim();
+            if (trimmedLine === '') return;
+            
+            const textLine = {
+                text: trimmedLine,
+                x: node.x + TEXT_OFFSET_X_NODO13,
+                y: startY + index * lineHeight,
+                waveSpeed: p.random(0.01, 0.03),
+                waveOffset: p.random(0, 1000),
+                waveAmp: p.random(50, 150),
+                rotation: p.random(-0.05, 0.05),
+                charRotations: []
+            };
+            
+            // Inizializza le rotazioni dei caratteri
+            for (let i = 0; i < trimmedLine.length; i++) {
+                textLine.charRotations.push(p.random(-0.1, 0.1));
+            }
+            
+            localTextLinesNodo13.push(textLine);
+        });
+    }
+    
+    // Funzione per creare le righe di testo per il nodo 21 (stile che hai fornito)
+    function createTextLinesNodo21(node) {
+        localTextLinesNodo21 = [];
+        
+        // Dividi il testo in righe
+        const lines = nodo21Text.split('\n');
+        
+        // PER MODIFICARE SPAZIATURA TRA RIGHE: cambia lineHeight (attualmente 800)
+        const lineHeight = 800; // ← CAMBIA QUI per spazio tra righe
+        
+        // PER MODIFICARE POSIZIONE Y INIZIALE: startY calcola dove inizia il testo verticalmente
+        const startY = node.y - ((lines.length - 1) * lineHeight) / 2;
+        
+        lines.forEach((line, lineIndex) => {
+            // Rimuovi spazi extra all'inizio e alla fine
+            const trimmedLine = line.trim();
+            if (trimmedLine === '') return;
+            
+            // Suddividi la riga in parole per animazioni individuali
+            const words = trimmedLine.split(/\s+/);
+            const wordsInLine = [];
+            
+            // PER MODIFICARE SPAZIATURA TRA PAROLE: cambia wordSpacing (attualmente 200)
+            const wordSpacing = 200; // ← CAMBIA QUI per spazio tra parole
+            
+            // PER MODIFICARE POSIZIONE X: cambia currentX (attualmente centrato)
+            let currentX = node.x + TEXT_OFFSET_X_NODO21; // ← POSIZIONE X INIZIALE
+            
+            // Calcola larghezza approssimativa della riga per centrare
+            const estimatedCharWidth = 180;
+            let totalLineWidth = 0;
+            words.forEach(word => {
+                totalLineWidth += word.length * estimatedCharWidth + wordSpacing;
+            });
+            totalLineWidth -= wordSpacing;
+            
+            // Centra la riga
+            currentX = currentX - totalLineWidth / 2; // ← GIUSTEZZA DELLA LINEA: cambia questa formula
+            
+            words.forEach((word, wordIndex) => {
+                const wordWidth = word.length * estimatedCharWidth;
+                
+                // Determina se questa parola deve avere animazioni speciali
+                const isSpecialWord = word.includes('SLASH') || 
+                                      word.includes('CURVA') || 
+                                      word.includes('ritmO') ||
+                                      word.includes('raPIdiTà');
+                
+                wordsInLine.push({
+                    text: word,
+                    x: currentX + wordWidth / 2,
+                    y: startY + lineIndex * lineHeight,
+                    baseX: currentX + wordWidth / 2, // ← POSIZIONE BASE X
+                    baseY: startY + lineIndex * lineHeight,
+                    
+                    // PER MODIFICARE ROTAZIONE INIZIALE:
+                    rotation: isSpecialWord ? p.random(-0.3, 0.3) : p.random(-0.05, 0.05),
+                    
+                    // PER MODIFICARE ONDE VERTICALI:
+                    waveAmpY: p.random(30, 80), // ← AMPIEZZA ONDA VERTICALE
+                    waveSpeedY: p.random(0.02, 0.04), // ← VELOCITÀ ONDA VERTICALE
+                    waveOffsetY: p.random(0, 1000), // ← OFFSET ONDA VERTICALE
+                    
+                    // PER MODIFICARE ONDE ORIZZONTALI (per parole speciali):
+                    waveAmpX: isSpecialWord ? p.random(100, 300) : p.random(0, 30), // ← AMPIEZZA ONDA ORIZZONTALE
+                    waveSpeedX: isSpecialWord ? p.random(0.03, 0.06) : p.random(0.01, 0.02), // ← VELOCITÀ ONDA ORIZZONTALE
+                    waveOffsetX: p.random(0, 1000), // ← OFFSET ONDA ORIZZONTALE
+                    
+                    // Animazioni extra per parole speciali
+                    specialMovement: isSpecialWord,
+                    pulseAmp: isSpecialWord ? p.random(50, 100) : 0,
+                    pulseSpeed: isSpecialWord ? p.random(0.05, 0.1) : 0,
+                    
+                    // PER MODIFICARE ROTAZIONI CARATTERI:
+                    charRotations: [],
+                    charSpacings: [] // Spazi individuali tra caratteri
+                });
+                
+                // Inizializza rotazioni e spazi per ogni carattere
+                const lastWord = wordsInLine[wordsInLine.length - 1];
+                
+                // PER MODIFICARE SPAZIATURA TRA CARATTERI: cambia baseCharSpacing (attualmente 180)
+                const baseCharSpacing = 180; // ← SPAZIATURA BASE TRA CARATTERI
+                
+                for (let i = 0; i < word.length; i++) {
+                    // Rotazioni caratteri
+                    lastWord.charRotations.push(
+                        isSpecialWord ? p.random(-0.5, 0.5) : p.random(-0.1, 0.1)
+                    );
+                    
+                    // Spazi individuali tra caratteri (variazione casuale)
+                    // PER MODIFICARE VARIABILITÀ SPAZI: cambia spacingVariation (attualmente 40)
+                    const spacingVariation = 40;
+                    lastWord.charSpacings.push(
+                        baseCharSpacing + (isSpecialWord ? 
+                            p.random(-spacingVariation * 2, spacingVariation * 2) : 
+                            p.random(-spacingVariation, spacingVariation))
+                    );
+                }
+                
+                // Sposta currentX per la prossima parola
+                currentX += wordWidth + wordSpacing;
+            });
+            
+            localTextLinesNodo21.push(wordsInLine);
+        });
+    }
+    
+    // Funzione generica per disegnare la descrizione (per nodi 2 e 3)
     function drawDescriptionGeneric(textLines, wordEntryStates, descriptionStartTime, showDescription, descriptionAlphaVar) {
         if (!showDescription && descriptionAlphaVar <= 0) return descriptionAlphaVar;
         
@@ -876,6 +1115,185 @@ const sketch = (p) => {
         if (!showDescriptionNodo3 && descriptionAlphaNodo3 <= 0) {
             localTextLinesNodo3 = [];
             localWordEntryStatesNodo3 = {};
+        }
+    }
+    
+    // Funzione per disegnare la descrizione del nodo 13 (stile semplice)
+    function drawNodo13Description() {
+        if (!showDescriptionNodo13 && descriptionAlphaNodo13 <= 0) return;
+       
+        // Anima l'alpha
+        if (showDescriptionNodo13) {
+            descriptionAlphaNodo13 = Math.min(descriptionAlphaNodo13 + DESCRIPTION_FADE_SPEED, 255);
+        } else {
+            descriptionAlphaNodo13 = Math.max(descriptionAlphaNodo13 - DESCRIPTION_FADE_SPEED, 0);
+        }
+       
+        const time = p.millis() * 0.001;
+       
+        // Disegna ogni riga
+        localTextLinesNodo13.forEach((line, lineIndex) => {
+            p.push();
+           
+            // Calcola l'effetto onda per l'intera riga
+            const waveY = p.sin(time * line.waveSpeed + line.waveOffset) * line.waveAmp;
+           
+            // Sposta all'inizio della riga (centrata)
+            p.translate(line.x, line.y + waveY);
+           
+            // Leggera rotazione dell'intera riga
+            p.rotate(line.rotation);
+           
+            // Imposta il colore bianco con alpha
+            p.fill(255, 255, 255, descriptionAlphaNodo13);
+            p.noStroke();
+           
+            // Imposta dimensioni del testo (molto grande)
+            p.textSize(700);
+            p.textAlign(p.CENTER, p.CENTER);
+           
+            // Disegna ogni carattere individualmente con rotazioni leggere
+            const charSpacing = 750; // Spazio tra caratteri
+            const totalWidth = (line.text.length - 1) * charSpacing;
+           
+            // Sposta indietro per centrare il testo
+            p.translate(-totalWidth / 2, 0);
+           
+            for (let i = 0; i < line.text.length; i++) {
+                p.push();
+               
+                // Sposta alla posizione del carattere
+                p.translate(i * charSpacing, 0);
+               
+                // Rotazione individuale per ogni carattere (leggera e animata)
+                const charRotation = line.charRotations[i] + p.sin(time * 2 + i * 0.3) * 0.1;
+                p.rotate(charRotation);
+               
+                // Colore bianco con leggera variazione di luminosità
+                const brightness = 200 + p.sin(time * 3 + i) * 55;
+                p.fill(brightness, brightness, brightness, descriptionAlphaNodo13);
+               
+                // Disegna il carattere
+                p.text(line.text[i], 0, 0);
+               
+                // Bagliore attorno al carattere (sottile)
+                p.fill(255, 255, 255, descriptionAlphaNodo13 * 0.2);
+                p.text(line.text[i], 0, 0);
+               
+                p.pop();
+            }
+           
+            p.pop();
+        });
+       
+        // Se stiamo chiudendo e alpha è 0, pulisci le righe
+        if (!showDescriptionNodo13 && descriptionAlphaNodo13 <= 0) {
+            localTextLinesNodo13 = [];
+        }
+    }
+    
+    // Funzione per disegnare la descrizione del nodo 21 (stile che hai fornito)
+    function drawNodo21Description() {
+        if (!showDescriptionNodo21 && descriptionAlphaNodo21 <= 0) return;
+        
+        // Anima l'alpha
+        if (showDescriptionNodo21) {
+            descriptionAlphaNodo21 = Math.min(descriptionAlphaNodo21 + DESCRIPTION_FADE_SPEED, 255);
+        } else {
+            descriptionAlphaNodo21 = Math.max(descriptionAlphaNodo21 - DESCRIPTION_FADE_SPEED, 0);
+        }
+        
+        const time = p.millis() * 0.001;
+        
+        // Disegna ogni riga (ogni riga è un array di parole)
+        localTextLinesNodo21.forEach((wordsInLine, lineIndex) => {
+            // Disegna ogni parola della riga
+            wordsInLine.forEach((word, wordIndex) => {
+                p.push();
+                
+                // Calcola effetti ondulatori
+                const waveY = p.sin(time * word.waveSpeedY + word.waveOffsetY) * word.waveAmpY;
+                const waveX = word.specialMovement ? 
+                    p.sin(time * word.waveSpeedX + word.waveOffsetX) * word.waveAmpX : 0;
+                
+                // Effetto pulsazione per parole speciali
+                const pulse = word.specialMovement ? 
+                    p.sin(time * word.pulseSpeed) * word.pulseAmp : 0;
+                
+                // Calcola posizione finale con tutti gli effetti
+                const finalX = word.x + waveX;
+                const finalY = word.y + waveY + pulse;
+                
+                // Sposta alla posizione della parola
+                p.translate(finalX, finalY);
+                
+                // Rotazione dell'intera parola (con animazione per parole speciali)
+                const wordRotation = word.rotation + 
+                    (word.specialMovement ? p.sin(time * 0.5) * 0.2 : 0);
+                p.rotate(wordRotation);
+                
+                // PER MODIFICARE DIMENSIONE TESTO: cambia textSize (attualmente 320)
+                const baseTextSize = 320; // ← DIMENSIONE BASE DEL TESTO
+                const sizeVariation = word.specialMovement ? 
+                    p.sin(time * 1.5) * 30 : 0;
+                p.textSize(baseTextSize + sizeVariation);
+                
+                p.textAlign(p.CENTER, p.CENTER);
+                
+                // Disegna ogni carattere individualmente
+                // Calcola larghezza totale con spazi individuali
+                let totalWidth = 0;
+                word.charSpacings.forEach(spacing => {
+                    totalWidth += spacing;
+                });
+                totalWidth -= word.charSpacings[word.charSpacings.length - 1];
+                
+                // PER MODIFICARE ALLINEAMENTO CARATTERI: cambia come calcoli startX
+                // Attualmente: -totalWidth / 2 (centrato)
+                const startX = -totalWidth / 2; // ← ALLINEAMENTO CARATTERI DENTRO PAROLA
+                
+                p.translate(startX, 0);
+                
+                let currentCharX = 0;
+                for (let i = 0; i < word.text.length; i++) {
+                    p.push();
+                    
+                    // Sposta alla posizione del carattere
+                    p.translate(currentCharX, 0);
+                    
+                    // Rotazione individuale per ogni carattere
+                    const charRotation = word.charRotations[i] + 
+                        p.sin(time * 2 + i * 0.3) * 0.1;
+                    p.rotate(charRotation);
+                    
+                    // Colore bianco con leggera variazione
+                    // PER MODIFICARE LUMINOSITÀ: cambia i valori di brightness
+                    const brightness = 220 + p.sin(time * 3 + i * 0.5) * 35;
+                    p.fill(brightness, brightness, brightness, descriptionAlphaNodo21);
+                    p.noStroke();
+                    
+                    // Disegna il carattere
+                    p.text(word.text[i], 0, 0);
+                    
+                    // Bagliore per parole speciali
+                    if (word.specialMovement) {
+                        p.fill(255, 255, 255, descriptionAlphaNodo21 * 0.4);
+                        p.text(word.text[i], 0, 0);
+                    }
+                    
+                    p.pop();
+                    
+                    // Sposta alla posizione del prossimo carattere
+                    currentCharX += word.charSpacings[i];
+                }
+                
+                p.pop();
+            });
+        });
+        
+        // Se stiamo chiudendo e alpha è 0, pulisci le righe
+        if (!showDescriptionNodo21 && descriptionAlphaNodo21 <= 0) {
+            localTextLinesNodo21 = [];
         }
     }
     
@@ -1212,10 +1630,7 @@ const sketch = (p) => {
         setupScrollListeners(canvas.elt);
         
         // Aggiorna il contatore iniziale
-        const nodeElement = document.getElementById('current-node');
-        if (nodeElement) {
-            nodeElement.textContent = (currentNodeIndex + 1);
-        }
+        updateNodeIndicator();
         
         console.log("Setup completato con", nodes.length, "nodi");
     };
@@ -1271,6 +1686,22 @@ const sketch = (p) => {
                 createTextLinesNodo3(nodes[2]);
             }
             drawNodo3Description();
+        }
+        
+        // Disegna la descrizione del nodo 13 (se attiva)
+        if (showDescriptionNodo13) {
+            if (localTextLinesNodo13.length === 0) {
+                createTextLinesNodo13(nodes[12]);
+            }
+            drawNodo13Description();
+        }
+        
+        // Disegna la descrizione del nodo 21 (se attiva)
+        if (showDescriptionNodo21) {
+            if (localTextLinesNodo21.length === 0) {
+                createTextLinesNodo21(nodes[20]);
+            }
+            drawNodo21Description();
         }
         
         p.pop();
