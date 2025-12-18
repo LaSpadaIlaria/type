@@ -60,6 +60,25 @@ let nodoImageAlphas = {};
 const NODO_IMAGE_TARGET_ALPHA = 200;
 const NODO_IMAGE_FADE_SPEED = 5;
 
+// Variabili per le immagini di sfondo
+let backgroundImages = [];
+let backgroundPositions = [];
+const BACKGROUND_COUNT = 8;
+const BACKGROUND_SPEED = 15.5; // Velocità di movimento dello sfondo più lenta
+const BACKGROUND_ALPHA = 40; // Molto più trasparenti per non dare fastidio
+const BACKGROUND_MIN_SCALE = 100; // Scala molto ridotta
+const BACKGROUND_MAX_SCALE = 200; // Scala ridotta
+
+// Variabile per controllare la visibilità del titolo e descrizione
+let showTitle = true;
+let titleAlpha = 255;
+
+// Variabili per i messaggi
+let showInstructionMessage = true;
+let instructionMessage = "";
+let messageAlpha = 0;
+const MESSAGE_FADE_SPEED = 5;
+
 // Impostazioni per le immagini (26 nodi) //sotto positivo. destra positivo
 const NODO_IMAGE_SETTINGS = {
     1: { offsetX: -10000, offsetY: 1000, scale: 8 },
@@ -173,24 +192,42 @@ const TEXT_OFFSET_X_NODO13 = 20000;
 const TEXT_OFFSET_X_NODO21 = -18000; // Offset per il nodo 21
 const BASE_TEXT_SIZE = 780;
 
-// Funzione per aggiornare l'indicatore del nodo
-function updateNodeIndicator() {
-    const nodeElement = document.getElementById('current-node');
-    if (!nodeElement) return;
-    
+// Funzione per aggiornare il messaggio di istruzione
+function updateInstructionMessage() {
     // Controlla se c'è una descrizione attiva
     const hasActiveDescription = showDescriptionNodo2 || showDescriptionNodo3 || 
                                 showDescriptionNodo13 || showDescriptionNodo21;
     
     if (hasActiveDescription) {
-        nodeElement.textContent = "Clicca per chiudere la descrizione";
-        nodeElement.style.color = "#ffffff";
-        nodeElement.style.fontStyle = "italic";
+        instructionMessage = "Click per chiudere la descrizione";
+    } else if (movementState === 'MOVING_TO_NODE') {
+        instructionMessage = "Raggiungendo il nodo...";
     } else {
-        nodeElement.textContent = `Nodo ${currentNodeIndex + 1}`;
-        nodeElement.style.color = "";
-        nodeElement.style.fontStyle = "";
+        instructionMessage = "Scroll per raggiungere il prossimo nodo";
     }
+    
+    // Fade in del messaggio
+    if (instructionMessage && !showTitle) {
+        showInstructionMessage = true;
+    } else {
+        showInstructionMessage = false;
+    }
+}
+
+// Funzione per disegnare il numero del nodo in alto a destra
+function drawNodeNumber(p) {
+    if (showTitle && titleAlpha > 0) return;
+    
+    const nodeNumber = currentNodeIndex + 1;
+    p.push();
+    p.fill(255, 255, 255, 255);
+    p.noStroke();
+    p.textAlign(p.RIGHT, p.TOP);
+    p.textSize(14);
+    p.textFont('Arial');
+    p.textStyle(p.BOLD);
+    p.text(`Nodo ${nodeNumber}/26`, p.width - 30, 30);
+    p.pop();
 }
 
 // ============ FUNZIONI UTILITY MATEMATICHE ============
@@ -311,6 +348,11 @@ function calculateNodes() {
 // Sistema di movimento tra nodi
 function startMovingToNextNode() {
     if (movementState === 'STOPPED') {
+        // Nascondi il titolo al primo movimento
+        if (showTitle) {
+            showTitle = false;
+        }
+        
         targetNodeIndex = currentNodeIndex + 1;
         if (targetNodeIndex >= nodes.length) {
             targetNodeIndex = 0;
@@ -328,6 +370,9 @@ function startMovingToNextNode() {
         if (targetNodeIndex >= 1 && targetNodeIndex <= 26) {
             showNodoImages[targetNodeIndex] = true;
         }
+        
+        // Aggiorna il messaggio
+        updateInstructionMessage();
     }
 }
 
@@ -355,8 +400,8 @@ function updateMovement() {
             currentNodeIndex = targetNodeIndex;
             movementState = 'STOPPED';
             
-            // Aggiorna l'indicatore del nodo
-            updateNodeIndicator();
+            // Aggiorna il messaggio
+            updateInstructionMessage();
             
             // Mantieni l'immagine visibile quando arriviamo al nodo
             if (currentNodeIndex >= 1 && currentNodeIndex <= 26) {
@@ -369,6 +414,18 @@ function updateMovement() {
                 }
             }
         }
+    }
+    
+    // Aggiorna alpha del titolo
+    if (!showTitle && titleAlpha > 0) {
+        titleAlpha -= 5;
+    }
+    
+    // Aggiorna alpha del messaggio
+    if (showInstructionMessage && messageAlpha < 255) {
+        messageAlpha = Math.min(messageAlpha + MESSAGE_FADE_SPEED, 255);
+    } else if (!showInstructionMessage && messageAlpha > 0) {
+        messageAlpha = Math.max(messageAlpha - MESSAGE_FADE_SPEED, 0);
     }
 }
 
@@ -454,8 +511,8 @@ function setupScrollListeners(canvasElement) {
             showDescriptionNodo13 = false;
             showDescriptionNodo21 = false;
             
-            // Aggiorna l'indicatore
-            updateNodeIndicator();
+            // Aggiorna il messaggio
+            updateInstructionMessage();
             
             if (showDescriptionNodo2) {
                 window.createTextLinesRequestedNodo2 = true;
@@ -469,8 +526,8 @@ function setupScrollListeners(canvasElement) {
             showDescriptionNodo13 = false;
             showDescriptionNodo21 = false;
             
-            // Aggiorna l'indicatore
-            updateNodeIndicator();
+            // Aggiorna il messaggio
+            updateInstructionMessage();
             
             if (showDescriptionNodo3) {
                 window.createTextLinesRequestedNodo3 = true;
@@ -484,8 +541,8 @@ function setupScrollListeners(canvasElement) {
             showDescriptionNodo3 = false;
             showDescriptionNodo21 = false;
             
-            // Aggiorna l'indicatore
-            updateNodeIndicator();
+            // Aggiorna il messaggio
+            updateInstructionMessage();
             
             if (showDescriptionNodo13) {
                 window.createTextLinesRequestedNodo13 = true;
@@ -499,8 +556,8 @@ function setupScrollListeners(canvasElement) {
             showDescriptionNodo3 = false;
             showDescriptionNodo13 = false;
             
-            // Aggiorna l'indicatore
-            updateNodeIndicator();
+            // Aggiorna il messaggio
+            updateInstructionMessage();
             
             if (showDescriptionNodo21) {
                 window.createTextLinesRequestedNodo21 = true;
@@ -531,6 +588,10 @@ const sketch = (p) => {
     // Variabili locali per il testo del nodo 21
     let localTextLinesNodo21 = [];
     
+    // Testo del titolo e descrizione
+    const projectTitle = "WakeType";
+    const projectDescription = `Il progetto interpreta l'archivio tipografico come il riflesso di una transizione psicologica che conduce dall'astrazione del sogno alla precisione della realtà. Attraverso un percorso immersivo simile a un risveglio, le forme inizialmente instabili e oniriche subiscono una progressiva razionalizzazione, trasformandosi gradualmente in una narrativa visiva coerente. L'esperienza culmina nella rivelazione del carattere tipografico finale, che emerge come il risultato naturale e definitivo di questo processo di stabilizzazione del segno.`;
+    
     // Funzione per caricare immagini in modo sicuro
     function loadImageSafely(path, placeholderText) {
         return new Promise((resolve) => {
@@ -553,6 +614,69 @@ const sketch = (p) => {
                 }
             );
         });
+    }
+    
+    // Funzione per disegnare titolo e descrizione
+    function drawTitleAndDescription() {
+        if (titleAlpha <= 0) return;
+        
+        p.push();
+        p.fill(255, 255, 255, titleAlpha);
+        p.noStroke();
+        p.textAlign(p.LEFT, p.TOP);
+        
+        // Titolo - grande in alto a sinistra
+        p.textSize(100);
+        p.textFont('Arial');
+        p.textStyle(p.BOLD);
+        p.text(projectTitle, 50, 70);
+        
+        // Descrizione - sotto il titolo
+        p.textSize(14);
+        p.textStyle(p.NORMAL);
+        p.textLeading(20);
+        
+        // Dividi la descrizione in linee più corte
+        const maxWidth = p.width * 0.3;
+        const words = projectDescription.split(' ');
+        let line = '';
+        let lines = [];
+        
+        for (let word of words) {
+            const testLine = line + word + ' ';
+            const testWidth = p.textWidth(testLine);
+            
+            if (testWidth > maxWidth && line !== '') {
+                lines.push(line);
+                line = word + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        lines.push(line);
+        
+        // Disegna le linee
+        const startY = 180;
+        for (let i = 0; i < lines.length; i++) {
+            p.text(lines[i], 50, startY + (i * 20));
+        }
+        
+        p.pop();
+    }
+    
+    // Funzione per disegnare il messaggio di istruzione
+    function drawInstructionMessage() {
+        if (messageAlpha <= 0) return;
+        
+        p.push();
+        p.fill(255, 255, 255, messageAlpha);
+        p.noStroke();
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(14);
+        p.textFont('Arial');
+        p.textStyle(p.NORMAL);
+        p.text(instructionMessage, p.width / 2, p.height - 50);
+        p.pop();
     }
     
     // Funzione generica per creare le righe di testo (per nodi 2 e 3)
@@ -1297,6 +1421,150 @@ const sketch = (p) => {
         }
     }
     
+    // Funzione per inizializzare le immagini di sfondo
+    function initBackgroundImages() {
+        backgroundImages = [];
+        backgroundPositions = [];
+        
+        // Calcola l'area del percorso per posizionare gli sfondi
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        
+        smoothPath.forEach(point => {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        });
+        
+        const areaWidth = maxX - minX;
+        const areaHeight = maxY - minY;
+        
+        // Crea posizioni casuali per gli sfondi (evitando il percorso principale)
+        for (let i = 0; i < BACKGROUND_COUNT; i++) {
+            let x, y;
+            let attempts = 0;
+            
+            // Trova una posizione lontana dal percorso
+            do {
+                x = minX + p.random(-areaWidth * 0.5, areaWidth * 1.5);
+                y = minY + p.random(-areaHeight * 0.5, areaHeight * 1.5);
+                attempts++;
+                
+                // Controlla la distanza dal percorso
+                let tooClose = false;
+                for (let j = 0; j < smoothPath.length; j += 10) {
+                    const point = smoothPath[j];
+                    const dist = p.dist(x, y, point.x, point.y);
+                    if (dist < 5000) { // Distanza minima dal percorso ridotta
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose || attempts > 50) break;
+            } while (true);
+            
+            // Velocità casuale ma molto lenta
+            const speedX = p.random(-BACKGROUND_SPEED, BACKGROUND_SPEED);
+            const speedY = p.random(-BACKGROUND_SPEED, BACKGROUND_SPEED);
+            
+            // Scala casuale ma molto ridotta
+            const scale = p.random(BACKGROUND_MIN_SCALE, BACKGROUND_MAX_SCALE);
+            
+            // Rotazione iniziale casuale
+            const rotation = p.random(p.TWO_PI);
+            const rotationSpeed = p.random(-0.0005, 0.0005); // Rotazione più lenta
+            
+            backgroundPositions.push({
+                x: x,
+                y: y,
+                speedX: speedX,
+                speedY: speedY,
+                scale: scale,
+                rotation: rotation,
+                rotationSpeed: rotationSpeed,
+                offsetX: p.random(1000),
+                offsetY: p.random(1000),
+                waveAmpX: p.random(100, 300), // Ampiezza ridotta
+                waveAmpY: p.random(100, 300),
+                waveSpeed: p.random(0.0003, 0.001) // Velocità ridotta
+            });
+        }
+    }
+    
+    // Funzione per aggiornare le posizioni degli sfondi
+    function updateBackgroundPositions() {
+        const time = p.millis() * 0.001;
+        
+        // Calcola i limiti dell'area
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        
+        smoothPath.forEach(point => {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        });
+        
+        const margin = 20000;
+        
+        backgroundPositions.forEach(bg => {
+            // Movimento lineare base
+            bg.x += bg.speedX;
+            bg.y += bg.speedY;
+            
+            // Aggiungi movimento ondulatorio molto leggero
+            const waveX = p.sin(time * bg.waveSpeed + bg.offsetX) * bg.waveAmpX;
+            const waveY = p.cos(time * bg.waveSpeed + bg.offsetY) * bg.waveAmpY;
+            
+            bg.x += waveX * 0.05; // Ridotto ulteriormente
+            bg.y += waveY * 0.05;
+            
+            // Aggiorna rotazione
+            bg.rotation += bg.rotationSpeed;
+            
+            // Wrap-around: se escono dall'area visibile, riportali dall'altro lato
+            if (bg.x < minX - margin) bg.x = maxX + margin;
+            if (bg.x > maxX + margin) bg.x = minX - margin;
+            if (bg.y < minY - margin) bg.y = maxY + margin;
+            if (bg.y > maxY + margin) bg.y = minY - margin;
+        });
+    }
+    
+    // Funzione per disegnare gli sfondi
+    function drawBackgrounds() {
+        const time = p.millis() * 0.001;
+        
+        backgroundPositions.forEach((bg, index) => {
+            if (backgroundImages[index]) {
+                p.push();
+                
+                // Applica trasformazioni
+                p.translate(bg.x, bg.y);
+                p.rotate(bg.rotation);
+                
+                // Effetto parallasse molto leggero
+                const parallaxX = p.sin(time * 0.00005 + bg.offsetX) * 50;
+                const parallaxY = p.cos(time * 0.00005 + bg.offsetY) * 50;
+                p.translate(parallaxX, parallaxY);
+                
+                // Imposta la trasparenza (molto bassa per non disturbare)
+                p.tint(255, 255, 255, BACKGROUND_ALPHA);
+                
+                // Disegna l'immagine ridotta
+                const img = backgroundImages[index];
+                const w = img.width * bg.scale;
+                const h = img.height * bg.scale;
+                p.imageMode(p.CENTER);
+                p.image(img, 0, 0, w, h);
+                
+                p.pop();
+            }
+        });
+    }
+    
     // Aggiungi funzione smoothstep
     p.smoothstep = function(edge0, edge1, x) {
         x = p.constrain((x - edge0) / (edge1 - edge0), 0.0, 1.0);
@@ -1580,7 +1848,7 @@ const sketch = (p) => {
             const placeholder = p.createGraphics(100, 100);
             placeholder.background(50, 50, 100, 100);
             placeholder.fill(200, 200, 255);
-            placeholder.textSize(14);
+            placeholder.textSize(24);
             placeholder.textAlign(p.CENTER, p.CENTER);
             placeholder.text(`Nodo ${i}`, 50, 50);
             nodoImages[i] = placeholder;
@@ -1602,6 +1870,26 @@ const sketch = (p) => {
                 } catch (e) {
                     console.warn(`Errore nel caricamento di nodo_${i}.png:`, e);
                 }
+            }
+        }
+        
+        // Carica le immagini di sfondo
+        for (let i = 1; i <= BACKGROUND_COUNT; i++) {
+            try {
+                const imgPath = 'assets/sfondo_' + i + '.png';
+                const img = await loadImageSafely(imgPath, `Sfondo ${i}`);
+                backgroundImages.push(img);
+                console.log(`✅ Immagine sfondo caricata: sfondo_${i}.png`);
+            } catch (e) {
+                console.warn(`Errore nel caricamento di sfondo_${i}.png:`, e);
+                // Crea un placeholder per lo sfondo
+                const placeholder = p.createGraphics(400, 400);
+                placeholder.background(30, 30, 60, 50);
+                placeholder.fill(100, 100, 200, 30);
+                placeholder.textSize(32);
+                placeholder.textAlign(p.CENTER, p.CENTER);
+                placeholder.text(`Sfondo ${i}`, 200, 200);
+                backgroundImages.push(placeholder);
             }
         }
     };
@@ -1626,13 +1914,16 @@ const sketch = (p) => {
         // Inizializza le stelle
         initStarParticles();
         
+        // Inizializza le immagini di sfondo
+        initBackgroundImages();
+        
         // Setup event listeners
         setupScrollListeners(canvas.elt);
         
-        // Aggiorna il contatore iniziale
-        updateNodeIndicator();
+        // Inizializza il messaggio
+        updateInstructionMessage();
         
-        console.log("Setup completato con", nodes.length, "nodi");
+        console.log("Setup completato con", nodes.length, "nodi e", BACKGROUND_COUNT, "immagini di sfondo");
     };
     
     p.draw = function() {
@@ -1647,11 +1938,26 @@ const sketch = (p) => {
         // Disegna stelle
         drawStars(currentPoint);
         
+        // Disegna titolo e descrizione (sopra tutto)
+        drawTitleAndDescription();
+        
+        // Disegna numero del nodo in alto a destra
+        drawNodeNumber(p);
+        
+        // Disegna messaggio di istruzione
+        drawInstructionMessage();
+        
         p.push();
         const zoom = 0.025;
         p.translate(p.width/2, p.height/2);
         p.scale(zoom);
         p.translate(-currentPoint.x, -currentPoint.y);
+        
+        // AGGIUNTO: Disegna le immagini di sfondo animate (dopo il gradiente ma prima del filo)
+        if (backgroundImages.length > 0) {
+            updateBackgroundPositions();
+            drawBackgrounds();
+        }
         
         // Disegna immagini dei nodi
         for (let i = 1; i <= 26; i++) {
@@ -1712,6 +2018,7 @@ const sketch = (p) => {
         window.width = p.width;
         window.height = p.height;
         initStarParticles();
+        initBackgroundImages();
     };
 };
 
