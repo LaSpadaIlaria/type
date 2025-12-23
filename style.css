@@ -1,15 +1,18 @@
+/* RESET E BASE */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
+html, body {
+    height: 100%;
     overflow-x: hidden;
-    background: #000000;
+    background: #ffffff;
     font-family: 'Arial', sans-serif;
 }
 
+/* CANVAS PRINCIPALE */
 #p5-canvas {
     position: fixed;
     top: 0;
@@ -17,33 +20,145 @@ body {
     width: 100vw;
     height: 100vh;
     z-index: 1;
+    cursor: pointer;
 }
 
 .scroll-space {
     height: 50000px;
 }
 
-.instructions {
+/* TITOLO E DESCRIZIONE */
+.title-section {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    color: rgba(138, 138, 138, 0.507);
-    font-size: 12px;
-    z-index: 100;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    border-radius: 5px;
-    max-width: 300px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
+.project-title {
+    position: absolute;
+    top: 70px;
+    left: 50px;
+    color: rgb(0, 0, 0);
+    font-size: 100px;
+    font-weight: bold;
+    margin: 0;
+    text-align: left;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+.project-description {
+    position: absolute;
+    top: 180px;
+    left: 50px;
+    color: rgb(0, 0, 0);
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 30vw;
+    text-align: left;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+/* CONTATORE NODI */
 .node-counter {
     position: fixed;
     top: 30px;
-    right: 20px;
-    color: rgba(138, 138, 138, 0.507);
-    font-size: 14px;
-    z-index: 100;
+    right: 30px;
+    z-index: 1001;
     background: rgba(0, 0, 0, 0.5);
-    padding: 8px 12px;
+    padding: 8px 16px;
     border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
 }
+
+.node-number {
+    color: rgb(0, 0, 0);
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+}
+
+/* MESSAGGIO DI ISTRUZIONE */
+.instruction-message {
+    position: fixed;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: rgb(0, 0, 0);
+    font-size: 14px;
+    font-family: 'Arial', sans-serif;
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .project-title {
+        font-size: 70px;
+    }
+    
+    .project-description {
+        max-width: 40vw;
+    }
+}
+
+@media (max-width: 768px) {
+    .project-title {
+        font-size: 50px;
+        top: 40px;
+        left: 20px;
+    }
+    
+    .project-description {
+        top: 130px;
+        left: 20px;
+        max-width: 80vw;
+        font-size: 12px;
+    }
+    
+    .node-counter {
+        top: 20px;
+        right: 20px;
+        padding: 6px 12px;
+    }
+    
+    .instruction-message {
+        bottom: 30px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .project-title {
+        font-size: 36px;
+    }
+    
+    .project-description {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+    
+    .node-counter .node-number {
+        font-size: 12px;
+    }
+}
+
+/* CONTROLLI ACCESSIBILITÀ */
+@media (prefers-reduced-motion: reduce) {
+    .title-section,
+    .node-counter,
+    .instruction-message {
+        transition: none;
+    }
+}
+

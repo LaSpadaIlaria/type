@@ -1,95 +1,29 @@
-// ============ PUNTI ORIGINALI ============
-const originalPoints = [
-    {x: 7853, y: 16849},
-    {x: 10975, y: 21322},
-    {x: 8947, y: 20178},
-    {x: 11477, y: 18139},
-    {x: 14239, y: 15658},
-    {x: 10053, y: 13004},
-    {x: 11477, y: 12162},
-    {x: 16828, y: 13392},
-    {x: 16577, y: 10112},
-    {x: 13297, y: 5602},
-    {x: 16577, y: 3789},
-    {x: 16828, y: 4933},
-    {x: 18166, y: 4291},
-    {x: 19547, y: 6341},
-    {x: 22309, y: 5602},
-    {x: 24165, y: 7285},
-    {x: 27035, y: 8105},
-    {x: 25028, y: 11911},
-    {x: 19798, y: 11409},
-    {x: 23294, y: 9610},
-    {x: 28861, y: 6783},
-    {x: 31530, y: 5184},
-    {x: 30516, y: 1861},
-    {x: 34055, y: 2854},
-    {x: 36321, y: 6532},
-    {x: 37616, y: 9861},
-    {x: 36688, y: 13011},
-    {x: 30516, y: 8607},
-    {x: 35372, y: 11544},
-    {x: 31638, y: 18139},
-    {x: 30265, y: 21613},
-    {x: 35121, y: 25044},
-    {x: 35833, y: 29619},
-    {x: 33654, y: 35433},
-    {x: 11226, y: 35433},
-    {x: 11226, y: 45694}
+// ============ DATI DEL PERCORSO ============
+const ORIGINAL_POINTS = [
+    {x: 7853, y: 16849}, {x: 10975, y: 21322}, {x: 8947, y: 20178},
+    {x: 11477, y: 18139}, {x: 14239, y: 15658}, {x: 10053, y: 13004},
+    {x: 11477, y: 12162}, {x: 16828, y: 13392}, {x: 16577, y: 10112},
+    {x: 13297, y: 5602}, {x: 16577, y: 3789}, {x: 16828, y: 4933},
+    {x: 18166, y: 4291}, {x: 19547, y: 6341}, {x: 22309, y: 5602},
+    {x: 24165, y: 7285}, {x: 27035, y: 8105}, {x: 25028, y: 11911},
+    {x: 19798, y: 11409}, {x: 23294, y: 9610}, {x: 28861, y: 6783},
+    {x: 31530, y: 5184}, {x: 30516, y: 1861}, {x: 34055, y: 2854},
+    {x: 36321, y: 6532}, {x: 37616, y: 9861}, {x: 36688, y: 13011},
+    {x: 30516, y: 8607}, {x: 35372, y: 11544}, {x: 31638, y: 18139},
+    {x: 30265, y: 21613}, {x: 35121, y: 25044}, {x: 35833, y: 29619},
+    {x: 33654, y: 35433}, {x: 11226, y: 35433}, {x: 11226, y: 45694}
 ];
 
-// ============ VARIABILI GLOBALI ============
-let scrollProgress = 0;
-let pathPoints = [];
-let smoothPath = [];
-let pathLength = 0;
-
-// Sistema di nodi - 26 NODI
-let nodes = [];
-let currentNodeIndex = 0;
-
-// Sistema di movimento
-let movementState = 'STOPPED'; // 'STOPPED', 'MOVING_TO_NODE'
-let targetNodeIndex = 0;
-const MOVEMENT_SPEED = 0.15;
-
-// Variabili per le immagini dei nodi
-let nodoImages = {};
-let showNodoImages = {};
-let nodoImageAlphas = {};
-const NODO_IMAGE_TARGET_ALPHA = 200;
-const NODO_IMAGE_FADE_SPEED = 5;
-
-// Variabili per le immagini di sfondo
-let backgroundImages = [];
-let backgroundPositions = [];
-const BACKGROUND_COUNT = 8;
-const BACKGROUND_SPEED = 15.5; // Velocità di movimento dello sfondo più lenta
-const BACKGROUND_ALPHA = 40; // Molto più trasparenti per non dare fastidio
-const BACKGROUND_MIN_SCALE = 100; // Scala molto ridotta
-const BACKGROUND_MAX_SCALE = 200; // Scala ridotta
-
-// Variabile per controllare la visibilità del titolo e descrizione
-let showTitle = true;
-let titleAlpha = 255;
-
-// Variabili per i messaggi
-let showInstructionMessage = true;
-let instructionMessage = "";
-let messageAlpha = 0;
-const MESSAGE_FADE_SPEED = 5;
-
-// Impostazioni per le immagini (26 nodi) //sotto positivo. destra positivo
 const NODO_IMAGE_SETTINGS = {
-    1: { offsetX: -10000, offsetY: 1000, scale: 8 },
+    1: { offsetX: -10000, offsetY: 1000, scale: 8 }, //sotto positivo, destra negativo
     2: { offsetX: -800, offsetY: -200, scale: 10 },
     3: { offsetX: -12000, offsetY: -6000, scale: 10 },
     4: { offsetX: -4000, offsetY: 1500, scale: 9 },
     5: { offsetX: -8000, offsetY: -1000, scale: 10 },
     6: { offsetX: 1000, offsetY: -5000, scale: 6.5 },
-    7: { offsetX: -3200, offsetY: -6500, scale: 10 },//forse b
-    8: { offsetX: 1000, offsetY: -2000, scale: 8 }, 
-    9: { offsetX: -3000, offsetY: 2000, scale: 9 }, 
+    7: { offsetX: -3200, offsetY: -6500, scale: 10 },
+    8: { offsetX: 1000, offsetY: -2000, scale: 8 },
+    9: { offsetX: -3000, offsetY: 2000, scale: 9 },
     10: { offsetX: -3000, offsetY: -6300, scale: 8 },
     11: { offsetX: -2500, offsetY: -7000, scale: 8 },
     12: { offsetX: -5500, offsetY: -7500, scale: 9 },
@@ -104,44 +38,12 @@ const NODO_IMAGE_SETTINGS = {
     21: { offsetX: -2400, offsetY: -7000, scale: 7 },
     22: { offsetX: -2600, offsetY: -7000, scale: 7 },
     23: { offsetX: -2000, offsetY: -5000, scale: 8 },
-    24: { offsetX: 2000, offsetY: -2000, scale: 11 }, //    questa è la P
+    24: { offsetX: 2000, offsetY: -2000, scale: 11 },
     25: { offsetX: -2000, offsetY: -5000, scale: 8 },
     26: { offsetX: 2000, offsetY: -2000, scale: 1.5 }
 };
 
-// Inizializza per 26 nodi
-for (let i = 1; i <= 26; i++) {
-    showNodoImages[i] = false;
-    nodoImageAlphas[i] = 0;
-}
-
-// Particelle per effetto stellato
-let starParticles = [];
-const STAR_COUNT = 100;
-
-// Descrizione Nodo 2
-let showDescriptionNodo2 = false;
-let textLines = [];
-let descriptionAlpha = 0;
-
-// Descrizione Nodo 3
-let showDescriptionNodo3 = false;
-let textLinesNodo3 = [];
-let descriptionAlphaNodo3 = 0;
-
-// Descrizione Nodo 13
-let showDescriptionNodo13 = false;
-let textLinesNodo13 = [];
-let descriptionAlphaNodo13 = 0;
-
-// Descrizione Nodo 21 - NUOVA
-let showDescriptionNodo21 = false;
-let textLinesNodo21 = [];
-let descriptionAlphaNodo21 = 0;
-
-const DESCRIPTION_FADE_SPEED = 8;
-
-// Testi
+// Testi esatti come nel primo codice
 const nodo3Text = `QuaLCosa si Avvolge… una CURVA che danza… 
 ritmO… raPIdiTà…
 LE grAzie conDuconO alla lettera, 
@@ -168,74 +70,81 @@ un'altra asta … SLASH!
 Un taglio.  
 E pOI… riNasCita.`;
 
-// Testo per il nodo 13
 const nodo13Text = `Il testo per il nodo 13 va qui...
 Puoi scrivere quello che vuoi
 su più righe
 come preferisci`;
 
-// Testo per il nodo 21
 const nodo21Text = `Il testo per il nodo 21 va qui...
 Puoi scrivere quello che vuoi
 su più righe
 come preferisci`;
 
-// Variabili per animazione testo
-let descriptionStartTime = 0;
-let wordEntryStates = {};
-let wordEntryStatesNodo3 = {};
+// ============ COSTANTI ============
+const NODE_COUNT = 26;
+const MOVEMENT_SPEED = 0.15;
+const STAR_COUNT = 100;
+const NODO_IMAGE_TARGET_ALPHA = 200;
+const NODO_IMAGE_FADE_SPEED = 5;
+const MESSAGE_FADE_SPEED = 5;
+const DESCRIPTION_FADE_SPEED = 8;
+const BASE_TEXT_SIZE = 780;
 
 // Spostamenti testo
 const TEXT_OFFSET_X_NODO2 = -20000;
 const TEXT_OFFSET_X_NODO3 = 22000;
 const TEXT_OFFSET_X_NODO13 = 20000;
-const TEXT_OFFSET_X_NODO21 = -18000; // Offset per il nodo 21
-const BASE_TEXT_SIZE = 780;
+const TEXT_OFFSET_X_NODO21 = -18000;
 
-// Funzione per aggiornare il messaggio di istruzione
-function updateInstructionMessage() {
-    // Controlla se c'è una descrizione attiva
-    const hasActiveDescription = showDescriptionNodo2 || showDescriptionNodo3 || 
-                                showDescriptionNodo13 || showDescriptionNodo21;
-    
-    if (hasActiveDescription) {
-        instructionMessage = "Click per chiudere la descrizione";
-    } else if (movementState === 'MOVING_TO_NODE') {
-        instructionMessage = "Raggiungendo il nodo...";
-    } else {
-        instructionMessage = "Scroll per raggiungere il prossimo nodo";
-    }
-    
-    // Fade in del messaggio
-    if (instructionMessage && !showTitle) {
-        showInstructionMessage = true;
-    } else {
-        showInstructionMessage = false;
-    }
+// ============ STATO GLOBALE ============
+let scrollProgress = 0;
+let pathPoints = [], smoothPath = [], pathLength = 0;
+let nodes = [], currentNodeIndex = 0;
+let movementState = 'STOPPED';
+let targetNodeIndex = 0;
+let isProcessing = false; // Variabile per tracciare lo stato di processing
+
+// Sistema di nodi
+let nodoImages = {};
+let showNodoImages = {};
+let nodoImageAlphas = {};
+
+// Sistema stelle
+let starParticles = [];
+
+// Descrizioni nodi
+let showDescriptionNodo2 = false;
+let showDescriptionNodo3 = false;
+let showDescriptionNodo13 = false;
+let showDescriptionNodo21 = false;
+
+// Variabili per testo
+let textLines = [];
+let textLinesNodo3 = [];
+let textLinesNodo13 = [];
+let textLinesNodo21 = [];
+let descriptionAlpha = 0;
+let descriptionAlphaNodo3 = 0;
+let descriptionAlphaNodo13 = 0;
+let descriptionAlphaNodo21 = 0;
+
+// Animazione testo
+let wordEntryStates = {};
+let wordEntryStatesNodo3 = {};
+let descriptionStartTime = 0;
+
+// Elementi DOM
+let titleSection, nodeCounter, instructionMessage;
+
+// Inizializza per 26 nodi
+for (let i = 1; i <= 26; i++) {
+    showNodoImages[i] = false;
+    nodoImageAlphas[i] = 0;
 }
 
-// Funzione per disegnare il numero del nodo in alto a destra
-function drawNodeNumber(p) {
-    if (showTitle && titleAlpha > 0) return;
-    
-    const nodeNumber = currentNodeIndex + 1;
-    p.push();
-    p.fill(255, 255, 255, 255);
-    p.noStroke();
-    p.textAlign(p.RIGHT, p.TOP);
-    p.textSize(14);
-    p.textFont('Arial');
-    p.textStyle(p.BOLD);
-    p.text(`Nodo ${nodeNumber}/26`, p.width - 30, 30);
-    p.pop();
-}
-
-// ============ FUNZIONI UTILITY MATEMATICHE ============
+// ============ FUNZIONI MATEMATICHE ============
 function scalePoints(points, multiplier) {
-    return points.map(p => ({
-        x: p.x * multiplier,
-        y: p.y * multiplier
-    }));
+    return points.map(p => ({ x: p.x * multiplier, y: p.y * multiplier }));
 }
 
 function createSmoothPath(points, segmentsPerCurve = 20) {
@@ -322,7 +231,6 @@ function getPointOnPath(t, points, totalLength) {
     return points[points.length - 1];
 }
 
-// Calcola 26 nodi equidistanti
 function calculateNodes() {
     nodes = [];
     const numNodes = 26;
@@ -345,12 +253,62 @@ function calculateNodes() {
     }
 }
 
-// Sistema di movimento tra nodi
+function distance(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// ============ GESTIONE INTERFACCIA HTML ============
+function initUIElements() {
+    titleSection = document.querySelector('.title-section');
+    nodeCounter = document.querySelector('.node-counter');
+    instructionMessage = document.querySelector('.instruction-message');
+}
+
+function updateUI() {
+    // Aggiorna contatore nodi
+    const nodeNumber = currentNodeIndex + 1;
+    document.querySelector('.node-number').textContent = `Nodo ${nodeNumber}/26`;
+    
+    // Mostra/nascondi titolo
+    if (titleSection) {
+        titleSection.style.opacity = scrollProgress === 0 ? '1' : '0';
+    }
+    
+    // Mostra/nascondi contatore
+    if (nodeCounter) {
+        nodeCounter.style.opacity = scrollProgress === 0 ? '0' : '1';
+    }
+    
+    // Aggiorna messaggio istruzione
+    updateInstructionMessage();
+}
+
+function updateInstructionMessage() {
+    if (!instructionMessage) return;
+    
+    const hasActiveDescription = showDescriptionNodo2 || showDescriptionNodo3 || 
+                                showDescriptionNodo13 || showDescriptionNodo21;
+    
+    if (hasActiveDescription) {
+        instructionMessage.textContent = "Click per chiudere la descrizione";
+        instructionMessage.style.opacity = '1';
+    } else if (movementState === 'MOVING_TO_NODE') {
+        instructionMessage.textContent = "Raggiungendo il nodo...";
+        instructionMessage.style.opacity = '1';
+    } else {
+        instructionMessage.textContent = "Scroll per raggiungere il prossimo nodo";
+        instructionMessage.style.opacity = scrollProgress === 0 ? '0' : '1';
+    }
+}
+
+// ============ MOVIMENTO E IMMAGINI NODI ============
 function startMovingToNextNode() {
-    if (movementState === 'STOPPED') {
+    if (movementState === 'STOPPED' && !isProcessing) {
         // Nascondi il titolo al primo movimento
-        if (showTitle) {
-            showTitle = false;
+        if (scrollProgress === 0) {
+            titleSection.style.opacity = '0';
         }
         
         targetNodeIndex = currentNodeIndex + 1;
@@ -359,6 +317,7 @@ function startMovingToNextNode() {
         }
         
         movementState = 'MOVING_TO_NODE';
+        isProcessing = true; // Blocca nuovi input fino al completamento
         
         // Resetta tutte le immagini
         for (let i = 1; i <= 26; i++) {
@@ -367,9 +326,15 @@ function startMovingToNextNode() {
         }
         
         // Attiva l'immagine per il nodo target (se ha un'immagine)
-        if (targetNodeIndex >= 1 && targetNodeIndex <= 26) {
-            showNodoImages[targetNodeIndex] = true;
+        if (targetNodeIndex >= 0 && targetNodeIndex < 26) {
+            showNodoImages[targetNodeIndex + 1] = true;
         }
+        
+        // Chiudi tutte le descrizioni
+        showDescriptionNodo2 = false;
+        showDescriptionNodo3 = false;
+        showDescriptionNodo13 = false;
+        showDescriptionNodo21 = false;
         
         // Aggiorna il messaggio
         updateInstructionMessage();
@@ -382,10 +347,11 @@ function updateMovement() {
         const distanceToTarget = Math.abs(targetT - scrollProgress);
         
         // Controllo per le immagini dei nodi
-        if (targetNodeIndex >= 1 && targetNodeIndex <= 26 && showNodoImages[targetNodeIndex]) {
+        const nodoIndex = targetNodeIndex + 1;
+        if (nodoIndex >= 1 && nodoIndex <= 26 && showNodoImages[nodoIndex]) {
             if (distanceToTarget < 0.008) {
-                nodoImageAlphas[targetNodeIndex] = Math.min(
-                    nodoImageAlphas[targetNodeIndex] + NODO_IMAGE_FADE_SPEED, 
+                nodoImageAlphas[nodoIndex] = Math.min(
+                    nodoImageAlphas[nodoIndex] + NODO_IMAGE_FADE_SPEED, 
                     NODO_IMAGE_TARGET_ALPHA
                 );
             }
@@ -399,13 +365,15 @@ function updateMovement() {
             scrollProgress = targetT;
             currentNodeIndex = targetNodeIndex;
             movementState = 'STOPPED';
+            isProcessing = false; // Sblocca nuovi input
             
             // Aggiorna il messaggio
             updateInstructionMessage();
             
             // Mantieni l'immagine visibile quando arriviamo al nodo
-            if (currentNodeIndex >= 1 && currentNodeIndex <= 26) {
-                nodoImageAlphas[currentNodeIndex] = NODO_IMAGE_TARGET_ALPHA;
+            const nodoIndex = currentNodeIndex + 1;
+            if (nodoIndex >= 1 && nodoIndex <= 26) {
+                nodoImageAlphas[nodoIndex] = NODO_IMAGE_TARGET_ALPHA;
             } else {
                 // Nascondi tutte le immagini
                 for (let i = 1; i <= 26; i++) {
@@ -416,181 +384,24 @@ function updateMovement() {
         }
     }
     
-    // Aggiorna alpha del titolo
-    if (!showTitle && titleAlpha > 0) {
-        titleAlpha -= 5;
-    }
-    
-    // Aggiorna alpha del messaggio
-    if (showInstructionMessage && messageAlpha < 255) {
-        messageAlpha = Math.min(messageAlpha + MESSAGE_FADE_SPEED, 255);
-    } else if (!showInstructionMessage && messageAlpha > 0) {
-        messageAlpha = Math.max(messageAlpha - MESSAGE_FADE_SPEED, 0);
-    }
-}
-
-// Calcola distanza tra due punti
-function distance(x1, y1, x2, y2) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-// ============ SETUP SCROLL LISTENERS ============
-function setupScrollListeners(canvasElement) {
-    let isProcessing = false;
-    
-    // Listener per wheel
-    window.addEventListener('wheel', function(e) {
-        if (isProcessing) return;
-        
-        if (Math.abs(e.deltaY) > 5 || Math.abs(e.deltaX) > 5) {
-            if (movementState === 'STOPPED') {
-                isProcessing = true;
-                startMovingToNextNode();
-                
-                setTimeout(() => {
-                    isProcessing = false;
-                }, 300);
-            }
-        }
-    });
-    
-    // Listener per tastiera
-    window.addEventListener('keydown', function(e) {
-        if (['Space', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.code)) {
-            e.preventDefault();
-            if (movementState === 'STOPPED' && !isProcessing) {
-                isProcessing = true;
-                startMovingToNextNode();
-                
-                setTimeout(() => {
-                    isProcessing = false;
-                }, 300);
-            }
-        }
-    });
-
-    // Listener per click sul canvas
-    if (canvasElement) {
-        canvasElement.addEventListener('click', handleCanvasClick);
-        canvasElement.style.cursor = 'pointer';
-    }
-    
-    function handleCanvasClick(e) {
-        const rect = e.target.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-        
-        const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
-        const zoom = 0.025;
-        
-        const worldX = (clickX - window.width/2) / zoom + currentPoint.x;
-        const worldY = (clickY - window.height/2) / zoom + currentPoint.y;
-        
-        // Verifica se il click è sul nodo 2
-        const nodo2 = nodes[1];
-        const distToNodo2 = distance(worldX, worldY, nodo2.x, nodo2.y);
-        
-        // Verifica se il click è sul nodo 3
-        const nodo3 = nodes[2];
-        const distToNodo3 = distance(worldX, worldY, nodo3.x, nodo3.y);
-        
-        // Verifica se il click è sul nodo 13
-        const nodo13 = nodes[12];
-        const distToNodo13 = distance(worldX, worldY, nodo13.x, nodo13.y);
-        
-        // Verifica se il click è sul nodo 21
-        const nodo21 = nodes[20];
-        const distToNodo21 = distance(worldX, worldY, nodo21.x, nodo21.y);
-        
-        // Tolleranza per cliccare i nodi
-        if (distToNodo2 < 1500) {
-            showDescriptionNodo2 = !showDescriptionNodo2;
-            showDescriptionNodo3 = false;
-            showDescriptionNodo13 = false;
-            showDescriptionNodo21 = false;
-            
-            // Aggiorna il messaggio
-            updateInstructionMessage();
-            
-            if (showDescriptionNodo2) {
-                window.createTextLinesRequestedNodo2 = true;
-            }
-            return;
-        }
-        
-        if (distToNodo3 < 1500) {
-            showDescriptionNodo3 = !showDescriptionNodo3;
-            showDescriptionNodo2 = false;
-            showDescriptionNodo13 = false;
-            showDescriptionNodo21 = false;
-            
-            // Aggiorna il messaggio
-            updateInstructionMessage();
-            
-            if (showDescriptionNodo3) {
-                window.createTextLinesRequestedNodo3 = true;
-            }
-            return;
-        }
-        
-        if (distToNodo13 < 1500) {
-            showDescriptionNodo13 = !showDescriptionNodo13;
-            showDescriptionNodo2 = false;
-            showDescriptionNodo3 = false;
-            showDescriptionNodo21 = false;
-            
-            // Aggiorna il messaggio
-            updateInstructionMessage();
-            
-            if (showDescriptionNodo13) {
-                window.createTextLinesRequestedNodo13 = true;
-            }
-            return;
-        }
-        
-        if (distToNodo21 < 1500) {
-            showDescriptionNodo21 = !showDescriptionNodo21;
-            showDescriptionNodo2 = false;
-            showDescriptionNodo3 = false;
-            showDescriptionNodo13 = false;
-            
-            // Aggiorna il messaggio
-            updateInstructionMessage();
-            
-            if (showDescriptionNodo21) {
-                window.createTextLinesRequestedNodo21 = true;
-            }
-            return;
-        }
-    }
+    updateUI();
 }
 
 // ============ SKETCH P5 ============
 const sketch = (p) => {
     let canvas;
-    let starParticles = [];
     
-    // Variabili locali per il testo del nodo 2
+    // Variabili locali per il testo
     let localTextLines = [];
     let localWordEntryStates = {};
     let localDescriptionStartTime = 0;
     
-    // Variabili locali per il testo del nodo 3
     let localTextLinesNodo3 = [];
     let localWordEntryStatesNodo3 = {};
     let localDescriptionStartTimeNodo3 = 0;
     
-    // Variabili locali per il testo del nodo 13
     let localTextLinesNodo13 = [];
-    
-    // Variabili locali per il testo del nodo 21
     let localTextLinesNodo21 = [];
-    
-    // Testo del titolo e descrizione
-    const projectTitle = "WakeType";
-    const projectDescription = `Il progetto interpreta l'archivio tipografico come il riflesso di una transizione psicologica che conduce dall'astrazione del sogno alla precisione della realtà. Attraverso un percorso immersivo simile a un risveglio, le forme inizialmente instabili e oniriche subiscono una progressiva razionalizzazione, trasformandosi gradualmente in una narrativa visiva coerente. L'esperienza culmina nella rivelazione del carattere tipografico finale, che emerge come il risultato naturale e definitivo di questo processo di stabilizzazione del segno.`;
     
     // Funzione per caricare immagini in modo sicuro
     function loadImageSafely(path, placeholderText) {
@@ -603,7 +414,6 @@ const sketch = (p) => {
                 },
                 (err) => {
                     console.log(`⚠️ Immagine non trovata: ${path}, creo placeholder`);
-                    // Crea un'immagine placeholder
                     const placeholder = p.createGraphics(200, 200);
                     placeholder.background(50, 50, 100, 100);
                     placeholder.fill(200, 200, 255);
@@ -616,69 +426,28 @@ const sketch = (p) => {
         });
     }
     
-    // Funzione per disegnare titolo e descrizione
-    function drawTitleAndDescription() {
-        if (titleAlpha <= 0) return;
-        
-        p.push();
-        p.fill(255, 255, 255, titleAlpha);
-        p.noStroke();
-        p.textAlign(p.LEFT, p.TOP);
-        
-        // Titolo - grande in alto a sinistra
-        p.textSize(100);
-        p.textFont('Arial');
-        p.textStyle(p.BOLD);
-        p.text(projectTitle, 50, 70);
-        
-        // Descrizione - sotto il titolo
-        p.textSize(14);
-        p.textStyle(p.NORMAL);
-        p.textLeading(20);
-        
-        // Dividi la descrizione in linee più corte
-        const maxWidth = p.width * 0.3;
-        const words = projectDescription.split(' ');
-        let line = '';
-        let lines = [];
-        
-        for (let word of words) {
-            const testLine = line + word + ' ';
-            const testWidth = p.textWidth(testLine);
-            
-            if (testWidth > maxWidth && line !== '') {
-                lines.push(line);
-                line = word + ' ';
-            } else {
-                line = testLine;
-            }
+    // Funzione smoothstep
+    p.smoothstep = function(edge0, edge1, x) {
+        x = p.constrain((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+        return x * x * (3.0 - 2.0 * x);
+    };
+    
+    // ============ INIZIALIZZAZIONI ============
+    function initStarParticles() {
+        starParticles = [];
+        for (let i = 0; i < STAR_COUNT; i++) {
+            starParticles.push({
+                x: p.random(p.width * 100),
+                y: p.random(p.height * 100),
+                size: p.random(1, 4),
+                brightness: p.random(50, 150),
+                twinkleSpeed: p.random(0.01, 0.03),
+                twinklePhase: p.random(p.TWO_PI)
+            });
         }
-        lines.push(line);
-        
-        // Disegna le linee
-        const startY = 180;
-        for (let i = 0; i < lines.length; i++) {
-            p.text(lines[i], 50, startY + (i * 20));
-        }
-        
-        p.pop();
     }
     
-    // Funzione per disegnare il messaggio di istruzione
-    function drawInstructionMessage() {
-        if (messageAlpha <= 0) return;
-        
-        p.push();
-        p.fill(255, 255, 255, messageAlpha);
-        p.noStroke();
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(14);
-        p.textFont('Arial');
-        p.textStyle(p.NORMAL);
-        p.text(instructionMessage, p.width / 2, p.height - 50);
-        p.pop();
-    }
-    
+    // ============ FUNZIONI PER DESCRIZIONI ============
     // Funzione generica per creare le righe di testo (per nodi 2 e 3)
     function createTextLinesGeneric(node, textContent, offsetX) {
         const textLines = [];
@@ -846,7 +615,7 @@ const sketch = (p) => {
         localDescriptionStartTimeNodo3 = p.millis();
     }
     
-    // Funzione per creare le righe di testo per il nodo 13 (stile semplice)
+    // Funzione per creare le righe di testo per il nodo 13
     function createTextLinesNodo13(node) {
         localTextLinesNodo13 = [];
         
@@ -869,7 +638,6 @@ const sketch = (p) => {
                 charRotations: []
             };
             
-            // Inizializza le rotazioni dei caratteri
             for (let i = 0; i < trimmedLine.length; i++) {
                 textLine.charRotations.push(p.random(-0.1, 0.1));
             }
@@ -878,35 +646,24 @@ const sketch = (p) => {
         });
     }
     
-    // Funzione per creare le righe di testo per il nodo 21 (stile che hai fornito)
+    // Funzione per creare le righe di testo per il nodo 21
     function createTextLinesNodo21(node) {
         localTextLinesNodo21 = [];
         
-        // Dividi il testo in righe
         const lines = nodo21Text.split('\n');
-        
-        // PER MODIFICARE SPAZIATURA TRA RIGHE: cambia lineHeight (attualmente 800)
-        const lineHeight = 800; // ← CAMBIA QUI per spazio tra righe
-        
-        // PER MODIFICARE POSIZIONE Y INIZIALE: startY calcola dove inizia il testo verticalmente
+        const lineHeight = 800;
         const startY = node.y - ((lines.length - 1) * lineHeight) / 2;
         
         lines.forEach((line, lineIndex) => {
-            // Rimuovi spazi extra all'inizio e alla fine
             const trimmedLine = line.trim();
             if (trimmedLine === '') return;
             
-            // Suddividi la riga in parole per animazioni individuali
             const words = trimmedLine.split(/\s+/);
             const wordsInLine = [];
             
-            // PER MODIFICARE SPAZIATURA TRA PAROLE: cambia wordSpacing (attualmente 200)
-            const wordSpacing = 200; // ← CAMBIA QUI per spazio tra parole
+            const wordSpacing = 200;
+            let currentX = node.x + TEXT_OFFSET_X_NODO21;
             
-            // PER MODIFICARE POSIZIONE X: cambia currentX (attualmente centrato)
-            let currentX = node.x + TEXT_OFFSET_X_NODO21; // ← POSIZIONE X INIZIALE
-            
-            // Calcola larghezza approssimativa della riga per centrare
             const estimatedCharWidth = 180;
             let totalLineWidth = 0;
             words.forEach(word => {
@@ -914,13 +671,11 @@ const sketch = (p) => {
             });
             totalLineWidth -= wordSpacing;
             
-            // Centra la riga
-            currentX = currentX - totalLineWidth / 2; // ← GIUSTEZZA DELLA LINEA: cambia questa formula
+            currentX = currentX - totalLineWidth / 2;
             
             words.forEach((word, wordIndex) => {
                 const wordWidth = word.length * estimatedCharWidth;
                 
-                // Determina se questa parola deve avere animazioni speciali
                 const isSpecialWord = word.includes('SLASH') || 
                                       word.includes('CURVA') || 
                                       word.includes('ritmO') ||
@@ -930,46 +685,35 @@ const sketch = (p) => {
                     text: word,
                     x: currentX + wordWidth / 2,
                     y: startY + lineIndex * lineHeight,
-                    baseX: currentX + wordWidth / 2, // ← POSIZIONE BASE X
+                    baseX: currentX + wordWidth / 2,
                     baseY: startY + lineIndex * lineHeight,
                     
-                    // PER MODIFICARE ROTAZIONE INIZIALE:
                     rotation: isSpecialWord ? p.random(-0.3, 0.3) : p.random(-0.05, 0.05),
                     
-                    // PER MODIFICARE ONDE VERTICALI:
-                    waveAmpY: p.random(30, 80), // ← AMPIEZZA ONDA VERTICALE
-                    waveSpeedY: p.random(0.02, 0.04), // ← VELOCITÀ ONDA VERTICALE
-                    waveOffsetY: p.random(0, 1000), // ← OFFSET ONDA VERTICALE
+                    waveAmpY: p.random(30, 80),
+                    waveSpeedY: p.random(0.02, 0.04),
+                    waveOffsetY: p.random(0, 1000),
                     
-                    // PER MODIFICARE ONDE ORIZZONTALI (per parole speciali):
-                    waveAmpX: isSpecialWord ? p.random(100, 300) : p.random(0, 30), // ← AMPIEZZA ONDA ORIZZONTALE
-                    waveSpeedX: isSpecialWord ? p.random(0.03, 0.06) : p.random(0.01, 0.02), // ← VELOCITÀ ONDA ORIZZONTALE
-                    waveOffsetX: p.random(0, 1000), // ← OFFSET ONDA ORIZZONTALE
+                    waveAmpX: isSpecialWord ? p.random(100, 300) : p.random(0, 30),
+                    waveSpeedX: isSpecialWord ? p.random(0.03, 0.06) : p.random(0.01, 0.02),
+                    waveOffsetX: p.random(0, 1000),
                     
-                    // Animazioni extra per parole speciali
                     specialMovement: isSpecialWord,
                     pulseAmp: isSpecialWord ? p.random(50, 100) : 0,
                     pulseSpeed: isSpecialWord ? p.random(0.05, 0.1) : 0,
                     
-                    // PER MODIFICARE ROTAZIONI CARATTERI:
                     charRotations: [],
-                    charSpacings: [] // Spazi individuali tra caratteri
+                    charSpacings: []
                 });
                 
-                // Inizializza rotazioni e spazi per ogni carattere
                 const lastWord = wordsInLine[wordsInLine.length - 1];
-                
-                // PER MODIFICARE SPAZIATURA TRA CARATTERI: cambia baseCharSpacing (attualmente 180)
-                const baseCharSpacing = 180; // ← SPAZIATURA BASE TRA CARATTERI
+                const baseCharSpacing = 180;
                 
                 for (let i = 0; i < word.length; i++) {
-                    // Rotazioni caratteri
                     lastWord.charRotations.push(
                         isSpecialWord ? p.random(-0.5, 0.5) : p.random(-0.1, 0.1)
                     );
                     
-                    // Spazi individuali tra caratteri (variazione casuale)
-                    // PER MODIFICARE VARIABILITÀ SPAZI: cambia spacingVariation (attualmente 40)
                     const spacingVariation = 40;
                     lastWord.charSpacings.push(
                         baseCharSpacing + (isSpecialWord ? 
@@ -978,7 +722,6 @@ const sketch = (p) => {
                     );
                 }
                 
-                // Sposta currentX per la prossima parola
                 currentX += wordWidth + wordSpacing;
             });
             
@@ -1242,11 +985,10 @@ const sketch = (p) => {
         }
     }
     
-    // Funzione per disegnare la descrizione del nodo 13 (stile semplice)
+    // Funzione per disegnare la descrizione del nodo 13
     function drawNodo13Description() {
         if (!showDescriptionNodo13 && descriptionAlphaNodo13 <= 0) return;
        
-        // Anima l'alpha
         if (showDescriptionNodo13) {
             descriptionAlphaNodo13 = Math.min(descriptionAlphaNodo13 + DESCRIPTION_FADE_SPEED, 255);
         } else {
@@ -1255,52 +997,38 @@ const sketch = (p) => {
        
         const time = p.millis() * 0.001;
        
-        // Disegna ogni riga
         localTextLinesNodo13.forEach((line, lineIndex) => {
             p.push();
            
-            // Calcola l'effetto onda per l'intera riga
             const waveY = p.sin(time * line.waveSpeed + line.waveOffset) * line.waveAmp;
            
-            // Sposta all'inizio della riga (centrata)
             p.translate(line.x, line.y + waveY);
-           
-            // Leggera rotazione dell'intera riga
             p.rotate(line.rotation);
            
-            // Imposta il colore bianco con alpha
             p.fill(255, 255, 255, descriptionAlphaNodo13);
             p.noStroke();
            
-            // Imposta dimensioni del testo (molto grande)
             p.textSize(700);
             p.textAlign(p.CENTER, p.CENTER);
            
-            // Disegna ogni carattere individualmente con rotazioni leggere
-            const charSpacing = 750; // Spazio tra caratteri
+            const charSpacing = 750;
             const totalWidth = (line.text.length - 1) * charSpacing;
            
-            // Sposta indietro per centrare il testo
             p.translate(-totalWidth / 2, 0);
            
             for (let i = 0; i < line.text.length; i++) {
                 p.push();
                
-                // Sposta alla posizione del carattere
                 p.translate(i * charSpacing, 0);
                
-                // Rotazione individuale per ogni carattere (leggera e animata)
                 const charRotation = line.charRotations[i] + p.sin(time * 2 + i * 0.3) * 0.1;
                 p.rotate(charRotation);
                
-                // Colore bianco con leggera variazione di luminosità
                 const brightness = 200 + p.sin(time * 3 + i) * 55;
                 p.fill(brightness, brightness, brightness, descriptionAlphaNodo13);
                
-                // Disegna il carattere
                 p.text(line.text[i], 0, 0);
                
-                // Bagliore attorno al carattere (sottile)
                 p.fill(255, 255, 255, descriptionAlphaNodo13 * 0.2);
                 p.text(line.text[i], 0, 0);
                
@@ -1310,17 +1038,15 @@ const sketch = (p) => {
             p.pop();
         });
        
-        // Se stiamo chiudendo e alpha è 0, pulisci le righe
         if (!showDescriptionNodo13 && descriptionAlphaNodo13 <= 0) {
             localTextLinesNodo13 = [];
         }
     }
     
-    // Funzione per disegnare la descrizione del nodo 21 (stile che hai fornito)
+    // Funzione per disegnare la descrizione del nodo 21
     function drawNodo21Description() {
         if (!showDescriptionNodo21 && descriptionAlphaNodo21 <= 0) return;
         
-        // Anima l'alpha
         if (showDescriptionNodo21) {
             descriptionAlphaNodo21 = Math.min(descriptionAlphaNodo21 + DESCRIPTION_FADE_SPEED, 255);
         } else {
@@ -1329,77 +1055,58 @@ const sketch = (p) => {
         
         const time = p.millis() * 0.001;
         
-        // Disegna ogni riga (ogni riga è un array di parole)
         localTextLinesNodo21.forEach((wordsInLine, lineIndex) => {
-            // Disegna ogni parola della riga
             wordsInLine.forEach((word, wordIndex) => {
                 p.push();
                 
-                // Calcola effetti ondulatori
                 const waveY = p.sin(time * word.waveSpeedY + word.waveOffsetY) * word.waveAmpY;
                 const waveX = word.specialMovement ? 
                     p.sin(time * word.waveSpeedX + word.waveOffsetX) * word.waveAmpX : 0;
                 
-                // Effetto pulsazione per parole speciali
                 const pulse = word.specialMovement ? 
                     p.sin(time * word.pulseSpeed) * word.pulseAmp : 0;
                 
-                // Calcola posizione finale con tutti gli effetti
                 const finalX = word.x + waveX;
                 const finalY = word.y + waveY + pulse;
                 
-                // Sposta alla posizione della parola
                 p.translate(finalX, finalY);
                 
-                // Rotazione dell'intera parola (con animazione per parole speciali)
                 const wordRotation = word.rotation + 
                     (word.specialMovement ? p.sin(time * 0.5) * 0.2 : 0);
                 p.rotate(wordRotation);
                 
-                // PER MODIFICARE DIMENSIONE TESTO: cambia textSize (attualmente 320)
-                const baseTextSize = 320; // ← DIMENSIONE BASE DEL TESTO
+                const baseTextSize = 320;
                 const sizeVariation = word.specialMovement ? 
                     p.sin(time * 1.5) * 30 : 0;
                 p.textSize(baseTextSize + sizeVariation);
                 
                 p.textAlign(p.CENTER, p.CENTER);
                 
-                // Disegna ogni carattere individualmente
-                // Calcola larghezza totale con spazi individuali
                 let totalWidth = 0;
                 word.charSpacings.forEach(spacing => {
                     totalWidth += spacing;
                 });
                 totalWidth -= word.charSpacings[word.charSpacings.length - 1];
                 
-                // PER MODIFICARE ALLINEAMENTO CARATTERI: cambia come calcoli startX
-                // Attualmente: -totalWidth / 2 (centrato)
-                const startX = -totalWidth / 2; // ← ALLINEAMENTO CARATTERI DENTRO PAROLA
-                
+                const startX = -totalWidth / 2;
                 p.translate(startX, 0);
                 
                 let currentCharX = 0;
                 for (let i = 0; i < word.text.length; i++) {
                     p.push();
                     
-                    // Sposta alla posizione del carattere
                     p.translate(currentCharX, 0);
                     
-                    // Rotazione individuale per ogni carattere
                     const charRotation = word.charRotations[i] + 
                         p.sin(time * 2 + i * 0.3) * 0.1;
                     p.rotate(charRotation);
                     
-                    // Colore bianco con leggera variazione
-                    // PER MODIFICARE LUMINOSITÀ: cambia i valori di brightness
                     const brightness = 220 + p.sin(time * 3 + i * 0.5) * 35;
                     p.fill(brightness, brightness, brightness, descriptionAlphaNodo21);
                     p.noStroke();
                     
-                    // Disegna il carattere
                     p.text(word.text[i], 0, 0);
                     
-                    // Bagliore per parole speciali
                     if (word.specialMovement) {
                         p.fill(255, 255, 255, descriptionAlphaNodo21 * 0.4);
                         p.text(word.text[i], 0, 0);
@@ -1407,7 +1114,6 @@ const sketch = (p) => {
                     
                     p.pop();
                     
-                    // Sposta alla posizione del prossimo carattere
                     currentCharX += word.charSpacings[i];
                 }
                 
@@ -1415,176 +1121,12 @@ const sketch = (p) => {
             });
         });
         
-        // Se stiamo chiudendo e alpha è 0, pulisci le righe
         if (!showDescriptionNodo21 && descriptionAlphaNodo21 <= 0) {
             localTextLinesNodo21 = [];
         }
     }
     
-    // Funzione per inizializzare le immagini di sfondo
-    function initBackgroundImages() {
-        backgroundImages = [];
-        backgroundPositions = [];
-        
-        // Calcola l'area del percorso per posizionare gli sfondi
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-        
-        smoothPath.forEach(point => {
-            minX = Math.min(minX, point.x);
-            maxX = Math.max(maxX, point.x);
-            minY = Math.min(minY, point.y);
-            maxY = Math.max(maxY, point.y);
-        });
-        
-        const areaWidth = maxX - minX;
-        const areaHeight = maxY - minY;
-        
-        // Crea posizioni casuali per gli sfondi (evitando il percorso principale)
-        for (let i = 0; i < BACKGROUND_COUNT; i++) {
-            let x, y;
-            let attempts = 0;
-            
-            // Trova una posizione lontana dal percorso
-            do {
-                x = minX + p.random(-areaWidth * 0.5, areaWidth * 1.5);
-                y = minY + p.random(-areaHeight * 0.5, areaHeight * 1.5);
-                attempts++;
-                
-                // Controlla la distanza dal percorso
-                let tooClose = false;
-                for (let j = 0; j < smoothPath.length; j += 10) {
-                    const point = smoothPath[j];
-                    const dist = p.dist(x, y, point.x, point.y);
-                    if (dist < 5000) { // Distanza minima dal percorso ridotta
-                        tooClose = true;
-                        break;
-                    }
-                }
-                
-                if (!tooClose || attempts > 50) break;
-            } while (true);
-            
-            // Velocità casuale ma molto lenta
-            const speedX = p.random(-BACKGROUND_SPEED, BACKGROUND_SPEED);
-            const speedY = p.random(-BACKGROUND_SPEED, BACKGROUND_SPEED);
-            
-            // Scala casuale ma molto ridotta
-            const scale = p.random(BACKGROUND_MIN_SCALE, BACKGROUND_MAX_SCALE);
-            
-            // Rotazione iniziale casuale
-            const rotation = p.random(p.TWO_PI);
-            const rotationSpeed = p.random(-0.0005, 0.0005); // Rotazione più lenta
-            
-            backgroundPositions.push({
-                x: x,
-                y: y,
-                speedX: speedX,
-                speedY: speedY,
-                scale: scale,
-                rotation: rotation,
-                rotationSpeed: rotationSpeed,
-                offsetX: p.random(1000),
-                offsetY: p.random(1000),
-                waveAmpX: p.random(100, 300), // Ampiezza ridotta
-                waveAmpY: p.random(100, 300),
-                waveSpeed: p.random(0.0003, 0.001) // Velocità ridotta
-            });
-        }
-    }
-    
-    // Funzione per aggiornare le posizioni degli sfondi
-    function updateBackgroundPositions() {
-        const time = p.millis() * 0.001;
-        
-        // Calcola i limiti dell'area
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-        
-        smoothPath.forEach(point => {
-            minX = Math.min(minX, point.x);
-            maxX = Math.max(maxX, point.x);
-            minY = Math.min(minY, point.y);
-            maxY = Math.max(maxY, point.y);
-        });
-        
-        const margin = 20000;
-        
-        backgroundPositions.forEach(bg => {
-            // Movimento lineare base
-            bg.x += bg.speedX;
-            bg.y += bg.speedY;
-            
-            // Aggiungi movimento ondulatorio molto leggero
-            const waveX = p.sin(time * bg.waveSpeed + bg.offsetX) * bg.waveAmpX;
-            const waveY = p.cos(time * bg.waveSpeed + bg.offsetY) * bg.waveAmpY;
-            
-            bg.x += waveX * 0.05; // Ridotto ulteriormente
-            bg.y += waveY * 0.05;
-            
-            // Aggiorna rotazione
-            bg.rotation += bg.rotationSpeed;
-            
-            // Wrap-around: se escono dall'area visibile, riportali dall'altro lato
-            if (bg.x < minX - margin) bg.x = maxX + margin;
-            if (bg.x > maxX + margin) bg.x = minX - margin;
-            if (bg.y < minY - margin) bg.y = maxY + margin;
-            if (bg.y > maxY + margin) bg.y = minY - margin;
-        });
-    }
-    
-    // Funzione per disegnare gli sfondi
-    function drawBackgrounds() {
-        const time = p.millis() * 0.001;
-        
-        backgroundPositions.forEach((bg, index) => {
-            if (backgroundImages[index]) {
-                p.push();
-                
-                // Applica trasformazioni
-                p.translate(bg.x, bg.y);
-                p.rotate(bg.rotation);
-                
-                // Effetto parallasse molto leggero
-                const parallaxX = p.sin(time * 0.00005 + bg.offsetX) * 50;
-                const parallaxY = p.cos(time * 0.00005 + bg.offsetY) * 50;
-                p.translate(parallaxX, parallaxY);
-                
-                // Imposta la trasparenza (molto bassa per non disturbare)
-                p.tint(255, 255, 255, BACKGROUND_ALPHA);
-                
-                // Disegna l'immagine ridotta
-                const img = backgroundImages[index];
-                const w = img.width * bg.scale;
-                const h = img.height * bg.scale;
-                p.imageMode(p.CENTER);
-                p.image(img, 0, 0, w, h);
-                
-                p.pop();
-            }
-        });
-    }
-    
-    // Aggiungi funzione smoothstep
-    p.smoothstep = function(edge0, edge1, x) {
-        x = p.constrain((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-        return x * x * (3.0 - 2.0 * x);
-    };
-    
-    function initStarParticles() {
-        starParticles = [];
-        for (let i = 0; i < STAR_COUNT; i++) {
-            starParticles.push({
-                x: p.random(p.width * 100),
-                y: p.random(p.height * 100),
-                size: p.random(1, 4),
-                brightness: p.random(50, 150),
-                twinkleSpeed: p.random(0.01, 0.03),
-                twinklePhase: p.random(p.TWO_PI)
-            });
-        }
-    }
-    
+    // ============ FUNZIONI DI DISEGNO ============
     function drawDarkGradient() {
         for (let y = 0; y < p.height; y++) {
             const darkness = p.map(y, 0, p.height, 10, 0);
@@ -1607,12 +1149,7 @@ const sketch = (p) => {
                 
                 p.noStroke();
                 p.fill(255, 255, 255, brightness);
-                p.ellipse(
-                    p.width/2 + relX / zoom,
-                    p.height/2 + relY / zoom,
-                    star.size,
-                    star.size
-                );
+                p.ellipse(p.width/2 + relX / zoom, p.height/2 + relY / zoom, star.size, star.size);
             }
         });
     }
@@ -1762,17 +1299,12 @@ const sketch = (p) => {
     }
     
     function drawNodoImage(nodeIndex, img, alpha) {
-        // Controllo sicuro per evitare errori
-        if (!nodes || nodes.length <= nodeIndex) return;
-        if (!img || alpha <= 0) return;
+        if (!nodes || nodes.length <= nodeIndex || !img || alpha <= 0) return;
         
         const node = nodes[nodeIndex];
-        if (!node) return;
-        
-        const settings = NODO_IMAGE_SETTINGS[nodeIndex];
+        const settings = NODO_IMAGE_SETTINGS[nodeIndex + 1];
         if (!settings) return;
         
-        // Controlla se img è valida
         if (!img.width || !img.height) return;
         
         p.push();
@@ -1786,7 +1318,7 @@ const sketch = (p) => {
             p.tint(255, alpha);
             p.image(img, imageX, imageY, desiredWidth, desiredHeight);
         } catch (e) {
-            console.warn("Errore nel disegno dell'immagine del nodo", nodeIndex, e);
+            console.warn("Errore nel disegno dell'immagine del nodo", nodeIndex + 1, e);
         }
         
         p.pop();
@@ -1839,57 +1371,136 @@ const sketch = (p) => {
         }
     }
     
+    // ============ GESTIONE CLICK ============
+    function handleCanvasClick(e) {
+        const rect = e.target.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
+        const zoom = 0.025;
+        
+        const worldX = (clickX - p.width/2) / zoom + currentPoint.x;
+        const worldY = (clickY - p.height/2) / zoom + currentPoint.y;
+        
+        // Verifica se il click è sul nodo 2
+        const nodo2 = nodes[1];
+        const distToNodo2 = distance(worldX, worldY, nodo2.x, nodo2.y);
+        
+        // Verifica se il click è sul nodo 3
+        const nodo3 = nodes[2];
+        const distToNodo3 = distance(worldX, worldY, nodo3.x, nodo3.y);
+        
+        // Verifica se il click è sul nodo 13
+        const nodo13 = nodes[12];
+        const distToNodo13 = distance(worldX, worldY, nodo13.x, nodo13.y);
+        
+        // Verifica se il click è sul nodo 21
+        const nodo21 = nodes[20];
+        const distToNodo21 = distance(worldX, worldY, nodo21.x, nodo21.y);
+        
+        // Tolleranza per cliccare i nodi
+        if (distToNodo2 < 1500) {
+            showDescriptionNodo2 = !showDescriptionNodo2;
+            showDescriptionNodo3 = false;
+            showDescriptionNodo13 = false;
+            showDescriptionNodo21 = false;
+            
+            updateInstructionMessage();
+            
+            if (showDescriptionNodo2) {
+                if (localTextLines.length === 0) {
+                    createTextLinesNodo2(nodo2);
+                }
+            }
+            return;
+        }
+        
+        if (distToNodo3 < 1500) {
+            showDescriptionNodo3 = !showDescriptionNodo3;
+            showDescriptionNodo2 = false;
+            showDescriptionNodo13 = false;
+            showDescriptionNodo21 = false;
+            
+            updateInstructionMessage();
+            
+            if (showDescriptionNodo3) {
+                if (localTextLinesNodo3.length === 0) {
+                    createTextLinesNodo3(nodo3);
+                }
+            }
+            return;
+        }
+        
+        if (distToNodo13 < 1500) {
+            showDescriptionNodo13 = !showDescriptionNodo13;
+            showDescriptionNodo2 = false;
+            showDescriptionNodo3 = false;
+            showDescriptionNodo21 = false;
+            
+            updateInstructionMessage();
+            
+            if (showDescriptionNodo13) {
+                if (localTextLinesNodo13.length === 0) {
+                    createTextLinesNodo13(nodo13);
+                }
+            }
+            return;
+        }
+        
+        if (distToNodo21 < 1500) {
+            showDescriptionNodo21 = !showDescriptionNodo21;
+            showDescriptionNodo2 = false;
+            showDescriptionNodo3 = false;
+            showDescriptionNodo13 = false;
+            
+            updateInstructionMessage();
+            
+            if (showDescriptionNodo21) {
+                if (localTextLinesNodo21.length === 0) {
+                    createTextLinesNodo21(nodo21);
+                }
+            }
+            return;
+        }
+        
+        // Se click fuori da nodi, chiudi tutte le descrizioni
+        if (showDescriptionNodo2 || showDescriptionNodo3 || showDescriptionNodo13 || showDescriptionNodo21) {
+            showDescriptionNodo2 = false;
+            showDescriptionNodo3 = false;
+            showDescriptionNodo13 = false;
+            showDescriptionNodo21 = false;
+            updateInstructionMessage();
+        }
+    }
+    
+    // ============ P5 LIFECYCLE ============
     p.preload = async function() {
         console.log("Caricamento immagini...");
         
-        // Carica le immagini in modo asincrono e sicuro
+        // Inizializza tutti i placeholder
         for (let i = 1; i <= 26; i++) {
-            // Crea prima un placeholder
-            const placeholder = p.createGraphics(100, 100);
+            const placeholder = p.createGraphics(200, 200);
             placeholder.background(50, 50, 100, 100);
             placeholder.fill(200, 200, 255);
             placeholder.textSize(24);
             placeholder.textAlign(p.CENTER, p.CENTER);
-            placeholder.text(`Nodo ${i}`, 50, 50);
+            placeholder.text(`Nodo ${i}`, 100, 100);
             nodoImages[i] = placeholder;
-            
-            // Prova a caricare l'immagine reale solo per i primi 24 nodi
-            if (i <= 24) {
-                try {
-                    const imgPath = 'assets/nodo_' + i + '.png';
-                    p.loadImage(imgPath, 
-                        (img) => {
-                            console.log(`✅ Immagine caricata: nodo_${i}.png`);
-                            nodoImages[i] = img;
-                        },
-                        (err) => {
-                            console.log(`⚠️ Immagine non trovata: nodo_${i}.png, uso placeholder`);
-                            // Mantieni il placeholder già creato
-                        }
-                    );
-                } catch (e) {
-                    console.warn(`Errore nel caricamento di nodo_${i}.png:`, e);
-                }
-            }
         }
         
-        // Carica le immagini di sfondo
-        for (let i = 1; i <= BACKGROUND_COUNT; i++) {
+        // Carica le immagini reali con la nuova mappatura:
+        // nodo_1.png -> Nodo 2, nodo_2.png -> Nodo 3, ..., nodo_24.png -> Nodo 25
+        for (let i = 1; i <= 24; i++) {
+            const nodeNumber = i + 1; // nodo_1 va al Nodo 2, ecc.
+            const imgPath = `assets/nodo_${i}.png`;
+            
             try {
-                const imgPath = 'assets/sfondo_' + i + '.png';
-                const img = await loadImageSafely(imgPath, `Sfondo ${i}`);
-                backgroundImages.push(img);
-                console.log(`✅ Immagine sfondo caricata: sfondo_${i}.png`);
+                const img = await loadImageSafely(imgPath, `Nodo ${nodeNumber}`);
+                nodoImages[nodeNumber] = img;
+                console.log(`✅ Immagine caricata: ${imgPath} per il Nodo ${nodeNumber}`);
             } catch (e) {
-                console.warn(`Errore nel caricamento di sfondo_${i}.png:`, e);
-                // Crea un placeholder per lo sfondo
-                const placeholder = p.createGraphics(400, 400);
-                placeholder.background(30, 30, 60, 50);
-                placeholder.fill(100, 100, 200, 30);
-                placeholder.textSize(32);
-                placeholder.textAlign(p.CENTER, p.CENTER);
-                placeholder.text(`Sfondo ${i}`, 200, 200);
-                backgroundImages.push(placeholder);
+                console.warn(`Errore nel caricamento di ${imgPath}:`, e);
             }
         }
     };
@@ -1899,12 +1510,11 @@ const sketch = (p) => {
         canvas = p.createCanvas(p.windowWidth, p.windowHeight);
         canvas.parent('p5-canvas');
         
-        // Inizializza le variabili globali
         window.width = p.width;
         window.height = p.height;
         
         // Calcola il percorso
-        pathPoints = scalePoints(originalPoints, 8);
+        pathPoints = scalePoints(ORIGINAL_POINTS, 8);
         smoothPath = createSmoothPath(pathPoints, 30);
         pathLength = calculatePathLength(smoothPath);
         
@@ -1914,38 +1524,44 @@ const sketch = (p) => {
         // Inizializza le stelle
         initStarParticles();
         
-        // Inizializza le immagini di sfondo
-        initBackgroundImages();
+        // Inizializza UI
+        initUIElements();
         
         // Setup event listeners
-        setupScrollListeners(canvas.elt);
+        canvas.elt.addEventListener('click', handleCanvasClick);
+        canvas.elt.style.cursor = 'pointer';
         
-        // Inizializza il messaggio
+        // Setup scroll listeners con controllo anti-saltamento
+        window.addEventListener('wheel', function(e) {
+            if (isProcessing || movementState !== 'STOPPED') return;
+            
+            if (Math.abs(e.deltaY) > 5 || Math.abs(e.deltaX) > 5) {
+                e.preventDefault();
+                startMovingToNextNode();
+            }
+        }, { passive: false });
+        
+        window.addEventListener('keydown', function(e) {
+            if (isProcessing || movementState !== 'STOPPED') return;
+            
+            if (['Space', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.code)) {
+                e.preventDefault();
+                startMovingToNextNode();
+            }
+        });
+        
         updateInstructionMessage();
         
-        console.log("Setup completato con", nodes.length, "nodi e", BACKGROUND_COUNT, "immagini di sfondo");
+        console.log("Setup completato con", nodes.length, "nodi");
+        console.log("Mappatura immagini: nodo_1.png -> Nodo 2, nodo_2.png -> Nodo 3, ..., nodo_24.png -> Nodo 25");
     };
     
     p.draw = function() {
-        // Aggiorna il movimento
         updateMovement();
-        
         const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
         
-        // Disegna sfondo
         drawDarkGradient();
-        
-        // Disegna stelle
         drawStars(currentPoint);
-        
-        // Disegna titolo e descrizione (sopra tutto)
-        drawTitleAndDescription();
-        
-        // Disegna numero del nodo in alto a destra
-        drawNodeNumber(p);
-        
-        // Disegna messaggio di istruzione
-        drawInstructionMessage();
         
         p.push();
         const zoom = 0.025;
@@ -1953,60 +1569,35 @@ const sketch = (p) => {
         p.scale(zoom);
         p.translate(-currentPoint.x, -currentPoint.y);
         
-        // AGGIUNTO: Disegna le immagini di sfondo animate (dopo il gradiente ma prima del filo)
-        if (backgroundImages.length > 0) {
-            updateBackgroundPositions();
-            drawBackgrounds();
-        }
-        
-        // Disegna immagini dei nodi
+        // Disegna immagini dei nodi con la corretta mappatura
         for (let i = 1; i <= 26; i++) {
             if (showNodoImages[i] && nodoImageAlphas[i] > 0 && nodoImages[i]) {
-                drawNodoImage(i, nodoImages[i], nodoImageAlphas[i]);
+                drawNodoImage(i-1, nodoImages[i], nodoImageAlphas[i]);
             }
         }
         
-        // Disegna i fili spiraleggianti
         drawSpiralThreads();
-        
-        // Disegna il percorso principale
         drawMainPath();
-        
-        // Disegna i nodi
         drawNodes();
-        
-        // Disegna il cerchietto
         drawMovingDot(currentPoint);
         
         // Disegna la descrizione del nodo 2 (se attiva)
-        if (showDescriptionNodo2) {
-            if (localTextLines.length === 0) {
-                createTextLinesNodo2(nodes[1]);
-            }
+        if (showDescriptionNodo2 || descriptionAlpha > 0) {
             drawNodo2Description();
         }
         
         // Disegna la descrizione del nodo 3 (se attiva)
-        if (showDescriptionNodo3) {
-            if (localTextLinesNodo3.length === 0) {
-                createTextLinesNodo3(nodes[2]);
-            }
+        if (showDescriptionNodo3 || descriptionAlphaNodo3 > 0) {
             drawNodo3Description();
         }
         
         // Disegna la descrizione del nodo 13 (se attiva)
-        if (showDescriptionNodo13) {
-            if (localTextLinesNodo13.length === 0) {
-                createTextLinesNodo13(nodes[12]);
-            }
+        if (showDescriptionNodo13 || descriptionAlphaNodo13 > 0) {
             drawNodo13Description();
         }
         
         // Disegna la descrizione del nodo 21 (se attiva)
-        if (showDescriptionNodo21) {
-            if (localTextLinesNodo21.length === 0) {
-                createTextLinesNodo21(nodes[20]);
-            }
+        if (showDescriptionNodo21 || descriptionAlphaNodo21 > 0) {
             drawNodo21Description();
         }
         
@@ -2018,9 +1609,8 @@ const sketch = (p) => {
         window.width = p.width;
         window.height = p.height;
         initStarParticles();
-        initBackgroundImages();
     };
 };
 
-// ============ INIZIALIZZAZIONE ============
+// ============ AVVIO ============
 new p5(sketch);

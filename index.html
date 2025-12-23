@@ -5,16 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Percorso Onirico</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Stili aggiuntivi per il canvas fluid simulation */
+        #smokey-fluid-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0; /* Sotto tutti gli altri elementi */
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
+    <!-- Canvas per l'effetto fluid simulation (sotto tutto) -->
+    <canvas id="smokey-fluid-canvas"></canvas>
+    
     <div id="p5-canvas"></div>
     <div class="scroll-space"></div>
-    <div class="instructions">
-        Scorri per far partire il cerchietto. Si fermerà automaticamente sul prossimo nodo.
-    </div>
-    <div class="node-counter">Nodo: <span id="current-node">1</span>/24</div>
     
-    <!-- Carica p5.js prima del nostro script -->
+    <!-- Elementi UI -->
+    <div class="title-section">
+        <h1 class="project-title">WakeType</h1>
+        <div class="project-description">
+            Il progetto interpreta l'archivio tipografico come il riflesso di una transizione psicologica che conduce dall'astrazione del sogno alla precisione della realtà. Attraverso un percorso immersivo simile a un risveglio, le forme inizialmente instabili e oniriche subiscono una progressiva razionalizzazione, trasformandosi gradualmente in una narrativa visiva coerente. L'esperienza culmina nella rivelazione del carattere tipografico finale, che emerge come il risultato naturale e definitivo di questo processo di stabilizzazione del segno.
+        </div>
+    </div>
+    
+    <div class="node-counter">
+        <span class="node-number">Nodo 1/26</span>
+    </div>
+    
+    <div class="instruction-message">
+        Scroll per raggiungere il prossimo nodo
+    </div>
+    
+    <!-- Elementi per le forme sfumate -->
+    <div class="forms-overlay">
+        <canvas id="forms-canvas"></canvas>
+    </div>
+    
+    <!-- Script per l'effetto fluid simulation -->
+    <script>
+        // Carica la libreria fluid simulation
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/smokey-fluid-cursor@latest/dist/index.global.js';
+            script.onload = function() {
+                if (window.SmokyFluid) {
+                    // Funzione personalizzata per generare colori ciano, magenta e giallo
+                    function getCMYColor() {
+                        const colors = [
+                            { r: 0, g: 0, b: 1 },   // Ciano
+                            { r: 1, g: 0, b: 0 },   // Magenta
+                            { r: 0, g: 1, b: 0 }    // Giallo
+                        ];
+                        return colors[Math.floor(Math.random() * colors.length)];
+                    }
+                    
+                    // Monkey patch per modificare i colori generati
+                    const originalInit = SmokyFluid.initFluid;
+                    SmokyFluid.initFluid = function(config) {
+                        // Ottieni l'istanza originale
+                        const fluid = originalInit(config);
+                        
+                        // Se esiste l'oggetto fluid, cerca di modificare la generazione colori
+                        if (fluid && window.fluidSimulation) {
+                            const originalGenerateColor = window.fluidSimulation.generateColor;
+                            if (originalGenerateColor) {
+                                window.fluidSimulation.generateColor = function() {
+                                    return getCMYColor();
+                                };
+                            }
+                        }
+                        
+                        return fluid;
+                    };
+                    
+                    // Inizializza con colori personalizzati
+                    SmokyFluid.initFluid({
+                        id: "smokey-fluid-canvas",
+                        transparent: true,
+                        densityDissipation: 3.16,
+                        velocityDissipation: 0.9,
+                        pressure: 0.08,
+                        curl: 35,
+                        splatRadius: 0.15,
+                        splatForce: 5000,
+                        shading: true,
+                        colorUpdateSpeed: 10.4,
+                        paused: false
+                    });
+                    
+                    console.log("✅ Fluid simulation avviata con colori CMY (Ciano, Magenta, Giallo)");
+                }
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
     <script src="script.js"></script>
 </body>
