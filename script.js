@@ -15,7 +15,7 @@ const ORIGINAL_POINTS = [
 ];
 
 const NODO_IMAGE_SETTINGS = {
-    1: { offsetX: -10000, offsetY: 1000, scale: 8 }, //sotto positivo, destra negativo
+    1: { offsetX: -10000, offsetY: 1000, scale: 8 },
     2: { offsetX: -800, offsetY: -200, scale: 10 },
     3: { offsetX: -12000, offsetY: -6000, scale: 10 },
     4: { offsetX: -4000, offsetY: 1500, scale: 9 },
@@ -102,7 +102,7 @@ let pathPoints = [], smoothPath = [], pathLength = 0;
 let nodes = [], currentNodeIndex = 0;
 let movementState = 'STOPPED';
 let targetNodeIndex = 0;
-let isProcessing = false; // Variabile per tracciare lo stato di processing
+let isProcessing = false;
 
 // Sistema di nodi
 let nodoImages = {};
@@ -244,10 +244,10 @@ function calculateNodes() {
             y: point.y,
             t: t,
             color: [
-                [255, 220, 180],
-                [180, 220, 255],
-                [220, 255, 180],
-                [255, 180, 220]
+                [50, 50, 50],
+                [100, 100, 100],
+                [150, 150, 150],
+                [200, 200, 200]
             ][i % 4]
         });
     }
@@ -267,21 +267,17 @@ function initUIElements() {
 }
 
 function updateUI() {
-    // Aggiorna contatore nodi
     const nodeNumber = currentNodeIndex + 1;
     document.querySelector('.node-number').textContent = `Nodo ${nodeNumber}/26`;
     
-    // Mostra/nascondi titolo
     if (titleSection) {
         titleSection.style.opacity = scrollProgress === 0 ? '1' : '0';
     }
     
-    // Mostra/nascondi contatore
     if (nodeCounter) {
         nodeCounter.style.opacity = scrollProgress === 0 ? '0' : '1';
     }
     
-    // Aggiorna messaggio istruzione
     updateInstructionMessage();
 }
 
@@ -306,7 +302,6 @@ function updateInstructionMessage() {
 // ============ MOVIMENTO E IMMAGINI NODI ============
 function startMovingToNextNode() {
     if (movementState === 'STOPPED' && !isProcessing) {
-        // Nascondi il titolo al primo movimento
         if (scrollProgress === 0) {
             titleSection.style.opacity = '0';
         }
@@ -317,26 +312,22 @@ function startMovingToNextNode() {
         }
         
         movementState = 'MOVING_TO_NODE';
-        isProcessing = true; // Blocca nuovi input fino al completamento
+        isProcessing = true;
         
-        // Resetta tutte le immagini
         for (let i = 1; i <= 26; i++) {
             showNodoImages[i] = false;
             nodoImageAlphas[i] = 0;
         }
         
-        // Attiva l'immagine per il nodo target (se ha un'immagine)
         if (targetNodeIndex >= 0 && targetNodeIndex < 26) {
             showNodoImages[targetNodeIndex + 1] = true;
         }
         
-        // Chiudi tutte le descrizioni
         showDescriptionNodo2 = false;
         showDescriptionNodo3 = false;
         showDescriptionNodo13 = false;
         showDescriptionNodo21 = false;
         
-        // Aggiorna il messaggio
         updateInstructionMessage();
     }
 }
@@ -346,7 +337,6 @@ function updateMovement() {
         const targetT = nodes[targetNodeIndex].t;
         const distanceToTarget = Math.abs(targetT - scrollProgress);
         
-        // Controllo per le immagini dei nodi
         const nodoIndex = targetNodeIndex + 1;
         if (nodoIndex >= 1 && nodoIndex <= 26 && showNodoImages[nodoIndex]) {
             if (distanceToTarget < 0.008) {
@@ -357,25 +347,20 @@ function updateMovement() {
             }
         }
         
-        // Muovi verso il target
         scrollProgress += (targetT - scrollProgress) * MOVEMENT_SPEED;
         
-        // Se siamo arrivati abbastanza vicino, fermati
         if (distanceToTarget < 0.0005) {
             scrollProgress = targetT;
             currentNodeIndex = targetNodeIndex;
             movementState = 'STOPPED';
-            isProcessing = false; // Sblocca nuovi input
+            isProcessing = false;
             
-            // Aggiorna il messaggio
             updateInstructionMessage();
             
-            // Mantieni l'immagine visibile quando arriviamo al nodo
             const nodoIndex = currentNodeIndex + 1;
             if (nodoIndex >= 1 && nodoIndex <= 26) {
                 nodoImageAlphas[nodoIndex] = NODO_IMAGE_TARGET_ALPHA;
             } else {
-                // Nascondi tutte le immagini
                 for (let i = 1; i <= 26; i++) {
                     showNodoImages[i] = false;
                     nodoImageAlphas[i] = 0;
@@ -391,7 +376,6 @@ function updateMovement() {
 const sketch = (p) => {
     let canvas;
     
-    // Variabili locali per il testo
     let localTextLines = [];
     let localWordEntryStates = {};
     let localDescriptionStartTime = 0;
@@ -403,7 +387,6 @@ const sketch = (p) => {
     let localTextLinesNodo13 = [];
     let localTextLinesNodo21 = [];
     
-    // Funzione per caricare immagini in modo sicuro
     function loadImageSafely(path, placeholderText) {
         return new Promise((resolve) => {
             const img = p.loadImage(
@@ -415,8 +398,8 @@ const sketch = (p) => {
                 (err) => {
                     console.log(`⚠️ Immagine non trovata: ${path}, creo placeholder`);
                     const placeholder = p.createGraphics(200, 200);
-                    placeholder.background(50, 50, 100, 100);
-                    placeholder.fill(200, 200, 255);
+                    placeholder.background(240, 240, 240, 100);
+                    placeholder.fill(50, 50, 50);
                     placeholder.textSize(24);
                     placeholder.textAlign(p.CENTER, p.CENTER);
                     placeholder.text(placeholderText, 100, 100);
@@ -426,13 +409,11 @@ const sketch = (p) => {
         });
     }
     
-    // Funzione smoothstep
     p.smoothstep = function(edge0, edge1, x) {
         x = p.constrain((x - edge0) / (edge1 - edge0), 0.0, 1.0);
         return x * x * (3.0 - 2.0 * x);
     };
     
-    // ============ INIZIALIZZAZIONI ============
     function initStarParticles() {
         starParticles = [];
         for (let i = 0; i < STAR_COUNT; i++) {
@@ -440,15 +421,13 @@ const sketch = (p) => {
                 x: p.random(p.width * 100),
                 y: p.random(p.height * 100),
                 size: p.random(1, 4),
-                brightness: p.random(50, 150),
+                brightness: p.random(50, 150) * 0.3,
                 twinkleSpeed: p.random(0.01, 0.03),
                 twinklePhase: p.random(p.TWO_PI)
             });
         }
     }
     
-    // ============ FUNZIONI PER DESCRIZIONI ============
-    // Funzione generica per creare le righe di testo (per nodi 2 e 3)
     function createTextLinesGeneric(node, textContent, offsetX) {
         const textLines = [];
         const wordEntryStates = {};
@@ -615,7 +594,6 @@ const sketch = (p) => {
         localDescriptionStartTimeNodo3 = p.millis();
     }
     
-    // Funzione per creare le righe di testo per il nodo 13
     function createTextLinesNodo13(node) {
         localTextLinesNodo13 = [];
         
@@ -646,7 +624,6 @@ const sketch = (p) => {
         });
     }
     
-    // Funzione per creare le righe di testo per il nodo 21
     function createTextLinesNodo21(node) {
         localTextLinesNodo21 = [];
         
@@ -729,7 +706,6 @@ const sketch = (p) => {
         });
     }
     
-    // Funzione generica per disegnare la descrizione (per nodi 2 e 3)
     function drawDescriptionGeneric(textLines, wordEntryStates, descriptionStartTime, showDescription, descriptionAlphaVar) {
         if (!showDescription && descriptionAlphaVar <= 0) return descriptionAlphaVar;
         
@@ -909,20 +885,20 @@ const sketch = (p) => {
                     
                     p.rotate(charRotation);
                     
-                    let brightness = 220;
+                    let blackBrightness = 0;
                     
                     if (easedProgress >= 0.7) {
                         const colorIntensity = p.smoothstep(0.7, 1, easedProgress);
                         const pulseBright = p.sin(time * 2.5 + i * 0.15) * 15 * colorIntensity;
-                        brightness = 220 + pulseBright;
+                        blackBrightness = 30 + pulseBright;
                         
                         if (word.specialMovement) {
                             const specialPulse = p.sin(time * 4 + i * 0.4) * 40 * colorIntensity;
-                            brightness = 235 + specialPulse;
+                            blackBrightness = 15 + specialPulse;
                         }
                     }
                     
-                    p.fill(brightness, brightness, brightness, descriptionAlphaVar);
+                    p.fill(blackBrightness, blackBrightness, blackBrightness, descriptionAlphaVar);
                     p.noStroke();
                     
                     p.text(word.text[i], 0, 0);
@@ -930,7 +906,7 @@ const sketch = (p) => {
                     if (word.specialMovement && easedProgress >= 0.7) {
                         const glowIntensity = p.smoothstep(0.7, 1, easedProgress);
                         const glowAlpha = descriptionAlphaVar * (0.25 + p.sin(time * 5 + i) * 0.15) * glowIntensity;
-                        p.fill(255, 255, 255, glowAlpha);
+                        p.fill(0, 0, 0, glowAlpha * 0.5);
                         p.textSize(baseTextSize + sizeVariation + 8);
                         p.text(word.text[i], 0, 0);
                         p.textSize(baseTextSize + sizeVariation);
@@ -985,7 +961,6 @@ const sketch = (p) => {
         }
     }
     
-    // Funzione per disegnare la descrizione del nodo 13
     function drawNodo13Description() {
         if (!showDescriptionNodo13 && descriptionAlphaNodo13 <= 0) return;
        
@@ -1005,7 +980,7 @@ const sketch = (p) => {
             p.translate(line.x, line.y + waveY);
             p.rotate(line.rotation);
            
-            p.fill(255, 255, 255, descriptionAlphaNodo13);
+            p.fill(0, 0, 0, descriptionAlphaNodo13);
             p.noStroke();
            
             p.textSize(700);
@@ -1024,12 +999,12 @@ const sketch = (p) => {
                 const charRotation = line.charRotations[i] + p.sin(time * 2 + i * 0.3) * 0.1;
                 p.rotate(charRotation);
                
-                const brightness = 200 + p.sin(time * 3 + i) * 55;
+                const brightness = 0 + p.sin(time * 3 + i) * 30;
                 p.fill(brightness, brightness, brightness, descriptionAlphaNodo13);
                
                 p.text(line.text[i], 0, 0);
                
-                p.fill(255, 255, 255, descriptionAlphaNodo13 * 0.2);
+                p.fill(0, 0, 0, descriptionAlphaNodo13 * 0.2);
                 p.text(line.text[i], 0, 0);
                
                 p.pop();
@@ -1043,7 +1018,6 @@ const sketch = (p) => {
         }
     }
     
-    // Funzione per disegnare la descrizione del nodo 21
     function drawNodo21Description() {
         if (!showDescriptionNodo21 && descriptionAlphaNodo21 <= 0) return;
         
@@ -1101,14 +1075,14 @@ const sketch = (p) => {
                         p.sin(time * 2 + i * 0.3) * 0.1;
                     p.rotate(charRotation);
                     
-                    const brightness = 220 + p.sin(time * 3 + i * 0.5) * 35;
+                    const brightness = 0 + p.sin(time * 3 + i * 0.5) * 20;
                     p.fill(brightness, brightness, brightness, descriptionAlphaNodo21);
                     p.noStroke();
                     
                     p.text(word.text[i], 0, 0);
                     
                     if (word.specialMovement) {
-                        p.fill(255, 255, 255, descriptionAlphaNodo21 * 0.4);
+                        p.fill(0, 0, 0, descriptionAlphaNodo21 * 0.4);
                         p.text(word.text[i], 0, 0);
                     }
                     
@@ -1127,12 +1101,10 @@ const sketch = (p) => {
     }
     
     // ============ FUNZIONI DI DISEGNO ============
-    function drawDarkGradient() {
-        for (let y = 0; y < p.height; y++) {
-            const darkness = p.map(y, 0, p.height, 10, 0);
-            p.stroke(darkness, darkness, darkness);
-            p.line(0, y, p.width, y);
-        }
+    function drawLightGradient() {
+        // Sfondo trasparente per vedere la fluid simulation sotto
+        p.clear();
+        p.background(0, 0, 0, 0);
     }
     
     function drawStars(currentPoint) {
@@ -1148,7 +1120,7 @@ const sketch = (p) => {
                 const brightness = star.brightness * twinkle;
                 
                 p.noStroke();
-                p.fill(255, 255, 255, brightness);
+                p.fill(50, 50, 50, brightness);
                 p.ellipse(p.width/2 + relX / zoom, p.height/2 + relY / zoom, star.size, star.size);
             }
         });
@@ -1158,14 +1130,14 @@ const sketch = (p) => {
         const time = p.millis();
         
         const colors = [
-            [255, 200, 220],
-            [200, 220, 255],
-            [220, 255, 200],
-            [255, 255, 180],
-            [255, 180, 220],
-            [180, 220, 255],
-            [220, 180, 255],
-            [255, 220, 180]
+            [30, 30, 30],
+            [60, 60, 60],
+            [90, 90, 90],
+            [120, 120, 120],
+            [150, 150, 150],
+            [180, 180, 180],
+            [210, 210, 210],
+            [240, 240, 240]
         ];
         
         for (let threadIndex = 0; threadIndex < 8; threadIndex++) {
@@ -1217,7 +1189,7 @@ const sketch = (p) => {
         const pulse = p.sin(p.millis() * 0.002) * 20;
         const currentThickness = 80 + pulse;
         
-        p.stroke(255, 255, 255, 220);
+        p.stroke(0, 0, 0, 220);
         p.strokeWeight(currentThickness);
         p.strokeCap(p.ROUND);
         
@@ -1233,7 +1205,7 @@ const sketch = (p) => {
         p.drawingContext.setLineDash([]);
         
         for (let i = 1; i <= 3; i++) {
-            p.stroke(255, 255, 255, 40 - i * 10);
+            p.stroke(100, 100, 100, 40 - i * 10);
             p.strokeWeight(currentThickness + i * 60);
             
             p.beginShape();
@@ -1279,7 +1251,7 @@ const sketch = (p) => {
                 const pointY = p.sin(angle) * nodeSize * 0.75;
                 const pointPulse = p.sin(time * 4 + i) * 10;
                 
-                p.fill(255, 255, 255, 200);
+                p.fill(200, 200, 200, 200);
                 p.noStroke();
                 p.ellipse(pointX, pointY, 40 + pointPulse, 40 + pointPulse);
             }
@@ -1290,10 +1262,10 @@ const sketch = (p) => {
             p.fill(node.color[0], node.color[1], node.color[2], isCurrent ? 255 : 150);
             p.ellipse(node.x, node.y, nodeSize * 0.6, nodeSize * 0.6);
             
-            p.fill(255, 255, 255, 255);
+            p.fill(220, 220, 220, 255);
             p.ellipse(node.x, node.y, 40, 40);
             
-            p.fill(255, 255, 255, 255);
+            p.fill(240, 240, 240, 255);
             p.ellipse(node.x, node.y, 10, 10);
         });
     }
@@ -1333,7 +1305,7 @@ const sketch = (p) => {
             const pulse = p.sin(time * 2 + i * 0.3) * 20;
             
             p.noStroke();
-            p.fill(255, 255, 255, alpha);
+            p.fill(0, 0, 0, alpha);
             p.ellipse(currentPoint.x, currentPoint.y, size + pulse, size + pulse);
         }
         
@@ -1342,19 +1314,19 @@ const sketch = (p) => {
             const alpha = 15 - i * 2;
             const pulse = p.sin(time * 3 + i) * 15;
             
-            p.fill(255, 255, 255, alpha);
+            p.fill(0, 0, 0, alpha);
             p.ellipse(currentPoint.x, currentPoint.y, size + pulse, size + pulse);
         }
         
         const mainPulse = p.sin(time * 5) * 25;
         p.noStroke();
-        p.fill(255, 255, 255, 220);
+        p.fill(0, 0, 0, 220);
         p.ellipse(currentPoint.x, currentPoint.y, 100 + mainPulse, 100 + mainPulse);
         
-        p.fill(255, 255, 200, 255);
+        p.fill(30, 30, 30, 255);
         p.ellipse(currentPoint.x, currentPoint.y, 50, 50);
         
-        p.fill(255, 255, 255, 255);
+        p.fill(0, 0, 0, 255);
         p.ellipse(currentPoint.x, currentPoint.y, 15, 15);
         
         if (movementState === 'MOVING_TO_NODE') {
@@ -1365,13 +1337,12 @@ const sketch = (p) => {
                 const trailY = currentPoint.y + p.sin(angle) * distance;
                 const trailSize = 20 + p.sin(time * 7 + i) * 10;
                 
-                p.fill(255, 255, 255, 150);
+                p.fill(0, 0, 0, 150);
                 p.ellipse(trailX, trailY, trailSize, trailSize);
             }
         }
     }
     
-    // ============ GESTIONE CLICK ============
     function handleCanvasClick(e) {
         const rect = e.target.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
@@ -1383,23 +1354,18 @@ const sketch = (p) => {
         const worldX = (clickX - p.width/2) / zoom + currentPoint.x;
         const worldY = (clickY - p.height/2) / zoom + currentPoint.y;
         
-        // Verifica se il click è sul nodo 2
         const nodo2 = nodes[1];
         const distToNodo2 = distance(worldX, worldY, nodo2.x, nodo2.y);
         
-        // Verifica se il click è sul nodo 3
         const nodo3 = nodes[2];
         const distToNodo3 = distance(worldX, worldY, nodo3.x, nodo3.y);
         
-        // Verifica se il click è sul nodo 13
         const nodo13 = nodes[12];
         const distToNodo13 = distance(worldX, worldY, nodo13.x, nodo13.y);
         
-        // Verifica se il click è sul nodo 21
         const nodo21 = nodes[20];
         const distToNodo21 = distance(worldX, worldY, nodo21.x, nodo21.y);
         
-        // Tolleranza per cliccare i nodi
         if (distToNodo2 < 1500) {
             showDescriptionNodo2 = !showDescriptionNodo2;
             showDescriptionNodo3 = false;
@@ -1464,7 +1430,6 @@ const sketch = (p) => {
             return;
         }
         
-        // Se click fuori da nodi, chiudi tutte le descrizioni
         if (showDescriptionNodo2 || showDescriptionNodo3 || showDescriptionNodo13 || showDescriptionNodo21) {
             showDescriptionNodo2 = false;
             showDescriptionNodo3 = false;
@@ -1478,21 +1443,18 @@ const sketch = (p) => {
     p.preload = async function() {
         console.log("Caricamento immagini...");
         
-        // Inizializza tutti i placeholder
         for (let i = 1; i <= 26; i++) {
             const placeholder = p.createGraphics(200, 200);
-            placeholder.background(50, 50, 100, 100);
-            placeholder.fill(200, 200, 255);
+            placeholder.background(240, 240, 240, 100);
+            placeholder.fill(50, 50, 50);
             placeholder.textSize(24);
             placeholder.textAlign(p.CENTER, p.CENTER);
             placeholder.text(`Nodo ${i}`, 100, 100);
             nodoImages[i] = placeholder;
         }
         
-        // Carica le immagini reali con la nuova mappatura:
-        // nodo_1.png -> Nodo 2, nodo_2.png -> Nodo 3, ..., nodo_24.png -> Nodo 25
         for (let i = 1; i <= 24; i++) {
-            const nodeNumber = i + 1; // nodo_1 va al Nodo 2, ecc.
+            const nodeNumber = i + 1;
             const imgPath = `assets/nodo_${i}.png`;
             
             try {
@@ -1513,25 +1475,19 @@ const sketch = (p) => {
         window.width = p.width;
         window.height = p.height;
         
-        // Calcola il percorso
         pathPoints = scalePoints(ORIGINAL_POINTS, 8);
         smoothPath = createSmoothPath(pathPoints, 30);
         pathLength = calculatePathLength(smoothPath);
         
-        // Calcola i nodi
         calculateNodes();
         
-        // Inizializza le stelle
         initStarParticles();
         
-        // Inizializza UI
         initUIElements();
         
-        // Setup event listeners
         canvas.elt.addEventListener('click', handleCanvasClick);
         canvas.elt.style.cursor = 'pointer';
         
-        // Setup scroll listeners con controllo anti-saltamento
         window.addEventListener('wheel', function(e) {
             if (isProcessing || movementState !== 'STOPPED') return;
             
@@ -1553,14 +1509,14 @@ const sketch = (p) => {
         updateInstructionMessage();
         
         console.log("Setup completato con", nodes.length, "nodi");
-        console.log("Mappatura immagini: nodo_1.png -> Nodo 2, nodo_2.png -> Nodo 3, ..., nodo_24.png -> Nodo 25");
+        console.log("Fluid simulation dovrebbe essere visibile sotto i nodi");
     };
     
     p.draw = function() {
         updateMovement();
         const currentPoint = getPointOnPath(scrollProgress, smoothPath, pathLength);
         
-        drawDarkGradient();
+        drawLightGradient(); // Sfondo trasparente
         drawStars(currentPoint);
         
         p.push();
@@ -1569,7 +1525,6 @@ const sketch = (p) => {
         p.scale(zoom);
         p.translate(-currentPoint.x, -currentPoint.y);
         
-        // Disegna immagini dei nodi con la corretta mappatura
         for (let i = 1; i <= 26; i++) {
             if (showNodoImages[i] && nodoImageAlphas[i] > 0 && nodoImages[i]) {
                 drawNodoImage(i-1, nodoImages[i], nodoImageAlphas[i]);
@@ -1581,22 +1536,18 @@ const sketch = (p) => {
         drawNodes();
         drawMovingDot(currentPoint);
         
-        // Disegna la descrizione del nodo 2 (se attiva)
         if (showDescriptionNodo2 || descriptionAlpha > 0) {
             drawNodo2Description();
         }
         
-        // Disegna la descrizione del nodo 3 (se attiva)
         if (showDescriptionNodo3 || descriptionAlphaNodo3 > 0) {
             drawNodo3Description();
         }
         
-        // Disegna la descrizione del nodo 13 (se attiva)
         if (showDescriptionNodo13 || descriptionAlphaNodo13 > 0) {
             drawNodo13Description();
         }
         
-        // Disegna la descrizione del nodo 21 (se attiva)
         if (showDescriptionNodo21 || descriptionAlphaNodo21 > 0) {
             drawNodo21Description();
         }
